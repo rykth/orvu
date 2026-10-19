@@ -1,10 +1,12 @@
 #!/bin/sh
-# Installs the package built with no sidecar inside, which is for Windows,
-# into an empty folder, with an empty home folder, and connects to a sidecar
-# over the network with a connection file. That is how an agent on Windows
-# uses a team. It also asks the package, with Node told it is on Windows, for
-# a sidecar of its own, and checks it is told to connect over the network.
+# Installs the library, with npm told it is on Windows, into an empty
+# folder, with an empty home folder, and connects to a sidecar over the
+# network with a connection file. There is no sidecar package for Windows,
+# so this is how an agent on Windows uses a team. It also asks the library,
+# with Node told it is on Windows, for a sidecar of its own, and runs its
+# orvud command, and checks both say to connect over the network.
 #
+#     sh typescript/scripts/build-package.sh --main-only
 #     sh typescript/scripts/clean-test-network.sh typescript/release/orvu-0.1.0.tgz
 #
 # The sidecar it connects to is the one built from this repository,
@@ -36,12 +38,12 @@ mkdir "$WORK/app" "$WORK/home"
 export npm_config_cache="$WORK/npm"
 cd "$WORK/app"
 npm init -y >/dev/null
-# The package is for Windows, and npm is told to install it here all the same.
-npm install --silent --force "$PACKAGE" 2>"$WORK/npm.out" || { cat "$WORK/npm.out"; exit 1; }
+# npm is told it is on Windows, so that it leaves out every sidecar package,
+# as it would there.
+npm install --silent --os=win32 --cpu=x64 "$PACKAGE" 2>"$WORK/npm.out" || { cat "$WORK/npm.out"; exit 1; }
 
-echo "--- the package has no sidecar inside, and no orvud command"
-test ! -e node_modules/orvu/bin
-test ! -e node_modules/.bin/orvud
+echo "--- no sidecar was installed"
+test ! -e node_modules/@orvuhq
 echo "none"
 
 echo "--- a sidecar elsewhere, serving the network"
@@ -87,3 +89,14 @@ try {
   console.log("it says to connect with ORVU_CONNECT");
 }
 '
+
+echo "--- on Windows, the orvud command"
+if run "
+Object.defineProperty(process, \"platform\", { value: \"win32\" });
+await import(\"$WORK/app/node_modules/orvu/dist/orvud.js\");
+" 2>"$WORK/command.out"; then
+    echo "the orvud command ran with no program to run" >&2
+    exit 1
+fi
+cat "$WORK/command.out"
+grep -q ORVU_CONNECT "$WORK/command.out"

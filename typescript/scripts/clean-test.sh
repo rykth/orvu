@@ -1,15 +1,26 @@
 #!/bin/sh
-# Installs a built package into an empty folder, with an empty home folder,
-# and runs the quickstart, a team, and a team on two machines. This is what a
-# new user's first commands do, so it is the test that the package works by
-# itself.
+# Installs the built library and the sidecar package for this kind of
+# machine into an empty folder, with an empty home folder, and runs the
+# quickstart, a team, and a team on two machines. This is what a new user's
+# first commands do, so it is the test that the packages work by themselves.
 #
-#     sh typescript/scripts/clean-test.sh typescript/release/orvu-*.tgz
+#     sh typescript/scripts/clean-test.sh typescript/release/orvu-0.1.0.tgz \
+#         typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 #
 # It needs Node and npm, and npm has to be able to fetch the two packages
-# this one uses.
+# the library uses.
+#
+# The library names the sidecar packages for every kind of machine as
+# optional. Until they are published, npm finds none of them online. It
+# skips an optional package it cannot find, and the one for this machine is
+# given to it here as a file, which stands in for it.
 set -e
+if [ $# -ne 2 ]; then
+    echo "usage: clean-test.sh orvu-<version>.tgz orvuhq-orvud-<os>-<cpu>-<version>.tgz" >&2
+    exit 2
+fi
 PACKAGE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+SIDECAR="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
 EXAMPLES="$(cd "$(dirname "$0")/../examples" && pwd)"
 # Node itself, not a version manager's stand-in for it, which may need
 # settings this test leaves out.
@@ -61,35 +72,70 @@ mkdir "$WORK/app" "$WORK/home"
 export npm_config_cache="$WORK/npm"
 cd "$WORK/app"
 npm init -y >/dev/null
-npm install --silent "$PACKAGE"
+npm install --silent "$PACKAGE" "$SIDECAR"
 
 # Nothing of the real user's is visible: no home folder, no running sidecar,
-# no orvud on the PATH except the one that came with the package.
+# no orvud on the PATH except the command that came with the package. Node is
+# on it, as for anyone who installs with npm: the command is run by Node.
+NODE_DIR="$(dirname "$NODE")"
+if [ -e "$NODE_DIR/orvud" ]; then
+    echo "$NODE_DIR, where Node is, has an orvud in it too" >&2
+    exit 1
+fi
 run() {
-    env -i HOME="$WORK/home" PATH="$WORK/app/node_modules/.bin:/usr/bin:/bin" "$@"
+    env -i HOME="$WORK/home" PATH="$WORK/app/node_modules/.bin:$NODE_DIR:/usr/bin:/bin" "$@"
 }
 
 echo "--- Node $("$NODE" --version)"
 
-echo "--- the package is for this kind of machine only"
-SAYS="$("$NODE" -p 'const p = require("./node_modules/orvu/package.json"); p.os + "-" + p.cpu')"
-test "$SAYS" = "$("$NODE" -p 'process.platform + "-" + process.arch')"
+MACHINE="$("$NODE" -p 'process.platform + "-" + process.arch')"
+echo "--- the library is for every kind of machine, and names every sidecar package"
+"$NODE" -e '
+const p = require("./node_modules/orvu/package.json");
+if (p.os !== undefined || p.cpu !== undefined) throw new Error("the library says which machines it is for");
+const names = ["linux-x64", "linux-arm64", "darwin-arm64", "darwin-x64"].map((m) => "@orvuhq/orvud-" + m).sort();
+const optional = p.optionalDependencies ?? {};
+if (JSON.stringify(Object.keys(optional).sort()) !== JSON.stringify(names)) throw new Error("it names " + Object.keys(optional));
+for (const name of names) if (optional[name] !== p.version) throw new Error(name + " is not at " + p.version);
+console.log(names.join(" "), "at", p.version);
+'
+
+echo "--- the sidecar package is for this kind of machine only"
+SAYS="$("$NODE" -p "const p = require(\"./node_modules/@orvuhq/orvud-$MACHINE/package.json\"); p.os + \"-\" + p.cpu + \" \" + p.version")"
+test "$SAYS" = "$MACHINE $("$NODE" -p 'require("./node_modules/orvu/package.json").version')"
+echo "$SAYS"
 # The same package, said to be for another kind of machine, is refused.
 mkdir "$WORK/other"
-tar -xzf "$PACKAGE" -C "$WORK/other"
+tar -xzf "$SIDECAR" -C "$WORK/other"
 cd "$WORK/other/package"
 npm pkg set "cpu[0]=other"
 npm pack --silent --pack-destination .. >/dev/null
 cd ..
 npm init -y >/dev/null
-if npm install ./orvu-*.tgz >/dev/null 2>"$WORK/refused"; then
+if npm install ./orvuhq-orvud-*.tgz >/dev/null 2>"$WORK/refused"; then
     echo "npm installed a package for another kind of machine" >&2
     exit 1
 fi
 grep -q EBADPLATFORM "$WORK/refused"
 cd "$WORK/app"
 
-echo "--- the sidecar that came with the package"
+echo "--- the library alone, before the sidecar packages are published"
+# npm skips the sidecar packages it cannot find, and the library says which
+# one to install.
+mkdir "$WORK/alone"
+cd "$WORK/alone"
+npm init -y >/dev/null
+npm install --silent "$PACKAGE"
+test ! -e node_modules/@orvuhq
+if env -i HOME="$WORK/home" PATH="$WORK/alone/node_modules/.bin:$NODE_DIR:/usr/bin:/bin" orvud --version 2>"$WORK/alone.out"; then
+    echo "orvud ran with no sidecar package installed" >&2
+    exit 1
+fi
+cat "$WORK/alone.out"
+grep -q "@orvuhq/orvud-$MACHINE" "$WORK/alone.out"
+cd "$WORK/app"
+
+echo "--- the orvud command, which runs the sidecar from its package"
 test "$(run sh -c 'command -v orvud')" = "$WORK/app/node_modules/.bin/orvud"
 run orvud --version
 
@@ -179,7 +225,7 @@ EOF
 run "$NODE" machines.mjs "$WORK/crew" | tee "$WORK/machines"
 grep -q "^beta read what alpha wrote: the other machine" "$WORK/machines"
 
-echo "--- every run shared one sidecar, started from inside the package"
+echo "--- every run shared one sidecar, started from the sidecar package"
 # The sidecar prints one line each time it starts, and that goes into a file
 # in its data folder.
 LOG="$(find "$WORK/home" -name orvud.log)"
@@ -188,6 +234,6 @@ for pid in $(ours); do
     command_of "$pid"
     echo
 done | grep -- "--local" | tee "$WORK/sidecar"
-grep -q "^$WORK/app/node_modules/orvu/bin/orvud " "$WORK/sidecar"
+grep -q "^$WORK/app/node_modules/@orvuhq/orvud-$MACHINE/bin/orvud " "$WORK/sidecar"
 
 echo "clean test passed"
