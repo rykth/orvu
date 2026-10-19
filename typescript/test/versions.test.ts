@@ -48,13 +48,21 @@ test("the package and the sidecar have the same version", () => {
   assert.equal(written.version, VERSION);
 });
 
-// The sidecar program goes in `bin/` of the package, so `bin/` has to be one
-// of the folders the package is made of. The licence texts go with it.
+// The sidecar program is not in this package: it comes in a package of its
+// own for each kind of machine. This one is the code, the message
+// definitions, the licence, and the `orvud` command that finds and runs the
+// program.
 test("the package is made of what it needs", () => {
   const written = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-  assert.deepEqual([...written.files].sort(), ["LICENSE", "bin", "dist", "proto"]);
-  // The sidecar is also a command of its own, for running it by hand.
-  assert.deepEqual(written.bin, { orvud: "bin/orvud" });
+  assert.deepEqual([...written.files].sort(), ["LICENSE", "dist", "proto"]);
+  assert.deepEqual(written.bin, { orvud: "dist/orvud.js" });
+  // It says nothing of which machines it is for: it is for all of them.
+  assert.equal(written.os, undefined);
+  assert.equal(written.cpu, undefined);
+  // The sidecar packages are named only in the package that is published,
+  // by the script that builds it, so that installing this folder for work on
+  // it never asks for them.
+  assert.equal(written.optionalDependencies, undefined);
 });
 
 // The sidecar is replaced by another release while a program is connected.

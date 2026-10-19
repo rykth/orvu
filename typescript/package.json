@@ -16,10 +16,9 @@
     }
   },
   "bin": {
-    "orvud": "bin/orvud"
+    "orvud": "dist/orvud.js"
   },
   "files": [
-    "bin",
     "dist",
     "proto",
     "LICENSE"

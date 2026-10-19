@@ -14,8 +14,8 @@ import { spawn } from "node:child_process";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as net from "node:net";
+import { createRequire } from "node:module";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import { SidecarUnavailable } from "./errors.ts";
 
 /** How many seconds a sidecar started from here stays up after the last
@@ -114,9 +114,44 @@ function runnable(file: string): boolean {
   }
 }
 
-/** The `orvud` program to start: the one named in `$ORVUD_BIN`, or the one
- * that came inside this package, or one on the `PATH`. */
-export function program(env: NodeJS.ProcessEnv = process.env): string {
+/** The kinds of machine there is a sidecar package for, by Node's names for
+ * the system and the processor. */
+const MACHINES: Record<string, readonly string[]> = {
+  linux: ["x64", "arm64"],
+  darwin: ["x64", "arm64"],
+};
+
+/** The npm package that holds the `orvud` program for this kind of machine,
+ * such as `@orvuhq/orvud-linux-x64`. npm installs it beside this package, and
+ * only on the kind of machine it is for. `null` where there is none, as on
+ * Windows. */
+export function sidecarPackage(platform: string = process.platform, arch: string = process.arch): string | null {
+  return MACHINES[platform]?.includes(arch) ? `@orvuhq/orvud-${platform}-${arch}` : null;
+}
+
+/** The program inside the sidecar package for this kind of machine, if that
+ * package is installed where this package can see it. */
+function fromPackage(name: string, from: string | URL): string | null {
+  let manifest: string;
+  try {
+    manifest = createRequire(from).resolve(`${name}/package.json`);
+  } catch {
+    return null;
+  }
+  const bin = path.join(path.dirname(manifest), "bin", "orvud");
+  return runnable(bin) ? bin : null;
+}
+
+/** Where to look from, and for which kind of machine. Tests change these. */
+export interface Looking {
+  from?: string | URL;
+  platform?: string;
+  arch?: string;
+}
+
+/** The `orvud` program to start: the one named in `$ORVUD_BIN`, or the one in
+ * the sidecar package for this kind of machine, or one on the `PATH`. */
+export function program(env: NodeJS.ProcessEnv = process.env, looking: Looking = {}): string {
   const named = env.ORVUD_BIN;
   if (named) {
     if (!runnable(named)) {
@@ -124,9 +159,10 @@ export function program(env: NodeJS.ProcessEnv = process.env): string {
     }
     return named;
   }
-  const bundled = fileURLToPath(new URL("../bin/orvud", import.meta.url));
-  if (runnable(bundled)) {
-    return bundled;
+  const name = sidecarPackage(looking.platform, looking.arch);
+  const packaged = name === null ? null : fromPackage(name, looking.from ?? import.meta.url);
+  if (packaged !== null) {
+    return packaged;
   }
   for (const folder of (env.PATH ?? "").split(path.delimiter)) {
     const candidate = path.join(folder, "orvud");
@@ -134,9 +170,18 @@ export function program(env: NodeJS.ProcessEnv = process.env): string {
       return candidate;
     }
   }
+  if (name === null) {
+    throw new SidecarUnavailable(
+      "no sidecar is running and there is no orvud program to start. There is none for this kind of " +
+        "machine yet: connect to one on Linux or a Mac over the network, with the connection file " +
+        "`orvud agent add --connection` makes there (pass it as `connection`, or set ORVU_CONNECT), " +
+        "or set $ORVUD_BIN to an orvud you have",
+    );
+  }
   throw new SidecarUnavailable(
-    "no sidecar is running and there is no orvud program to start. This copy of the " +
-      "package came without one: put orvud on the PATH, or set $ORVUD_BIN to where it is",
+    `no sidecar is running and there is no orvud program to start. It comes in the package ${name}, ` +
+      "which npm installs with this one unless optional packages are left out: install it, put orvud " +
+      "on the PATH, or set $ORVUD_BIN to where it is",
   );
 }
 
