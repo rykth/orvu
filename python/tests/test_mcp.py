@@ -1381,6 +1381,12 @@ def test_a_task_change_is_told_to_an_agent_that_subscribed_to_tasks(agents, team
     assert alice.notified()["params"] == {"uri": "orvu://tasks"}
     team.tasks.claim(task)
     assert alice.notified()["params"] == {"uri": "orvu://tasks"}
+    # A claim writes more than one field, so another notice may still be on
+    # its way. Stop following, and take what is left, so that nothing comes
+    # after the test.
+    assert alice.ask("resources/unsubscribe", {"uri": "orvu://tasks"})["result"] == {}
+    while (late := alice.notified(seconds=1)) is not None:
+        assert late["params"] == {"uri": "orvu://tasks"}
 
 
 def test_subscribing_to_something_that_is_not_there_is_refused(alice):
