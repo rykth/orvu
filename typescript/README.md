@@ -26,21 +26,19 @@ or a container" below. It does not run in a browser.
 
 ## How to use it
 
-Once it is published, `npm install @orvuhq/orvu` is all it takes. Until then, build
-it from this repository and install the two files that come out together:
-
 ```text
-sh typescript/scripts/build-package.sh
-npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
+npm install @orvuhq/orvu
 ```
 
 `@orvuhq/orvu` is the library, the same on every machine. `orvud` comes in a
 package of its own for each kind of machine: `@orvuhq/orvud-linux-x64`,
 `-linux-arm64`, `-darwin-arm64` and `-darwin-x64`. The library names all
 four as optional, and npm installs only the one that fits, so on Linux or a
-Mac, on Intel or ARM, there is nothing else to set up. The second file above
-is named for the kind of machine it was built on, and npm refuses to install
-it on another kind. On Windows none fits, and the library connects to an
+Mac, on Intel or ARM, there is nothing else to set up. So far only
+`@orvuhq/orvud-linux-x64` is on npm. On Linux on ARM or on a Mac, build both
+from this repository for now, as "Working on this package" below says, and
+install the two files together; npm refuses to install a sidecar package on
+another kind of machine. On Windows none fits, and the library connects to an
 `orvud` elsewhere over the network instead.
 The first `connect()` starts `orvud` in the background, and every program you
 run after that shares it, whether it is written in TypeScript or in Python.

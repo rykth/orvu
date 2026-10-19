@@ -53,19 +53,26 @@ elsewhere with a connection file.
 
 ## TypeScript
 
-Once the npm package is published, it is `npm install @orvuhq/orvu`. That brings
-the library and, on Linux or a Mac, on Intel or ARM, the sidecar for that
-machine, which comes in a package of its own such as
+```text
+npm install @orvuhq/orvu
+```
+
+That brings the library and the sidecar for your machine, which comes in a
+package of its own. On npm so far is the sidecar for Linux on Intel/AMD,
 `@orvuhq/orvud-linux-x64`. On Windows it brings the library only, which
 connects to a sidecar elsewhere with a connection file.
 
-Until then, build the two from this repository. That needs Rust, `protoc`,
+### Linux on ARM, or a Mac
+
+The sidecar packages for these are not on npm yet, so `npm install
+@orvuhq/orvu` brings the library alone, and it says which package is missing.
+Build both from this repository on that machine. That needs Rust, `protoc`,
 Node and npm, and on Linux also `cargo zigbuild` (see [the TypeScript
 package's README](../../typescript/README.md#working-on-this-package)):
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
+npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-<os>-<cpu>-0.1.0.tgz
 ```
 
 The second file is named for the kind of machine it was built on, and works
