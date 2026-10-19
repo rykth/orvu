@@ -16,6 +16,7 @@ import * as fs from "node:fs";
 import * as net from "node:net";
 import { createRequire } from "node:module";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { SidecarUnavailable } from "./errors.ts";
 
 /** How many seconds a sidecar started from here stays up after the last
@@ -147,6 +148,24 @@ export interface Looking {
   from?: string | URL;
   platform?: string;
   arch?: string;
+  /** This package's own `orvud` command, which is never taken for the
+   * program. */
+  command?: string;
+}
+
+/** This package's own `orvud` command: the file beside this one. */
+function ownCommand(): string {
+  const here = fileURLToPath(import.meta.url);
+  return path.join(path.dirname(here), `orvud${path.extname(here)}`);
+}
+
+/** Whether two paths lead to the same file, through any links. */
+function sameFile(a: string, b: string): boolean {
+  try {
+    return fs.realpathSync(a) === fs.realpathSync(b);
+  } catch {
+    return false;
+  }
 }
 
 /** The `orvud` program to start: the one named in `$ORVUD_BIN`, or the one in
@@ -164,9 +183,12 @@ export function program(env: NodeJS.ProcessEnv = process.env, looking: Looking =
   if (packaged !== null) {
     return packaged;
   }
+  // npm puts this package's own `orvud` command on the PATH of the scripts it
+  // runs. That command runs the program, so it is passed over here.
+  const command = looking.command ?? ownCommand();
   for (const folder of (env.PATH ?? "").split(path.delimiter)) {
     const candidate = path.join(folder, "orvud");
-    if (folder && runnable(candidate)) {
+    if (folder && runnable(candidate) && !sameFile(candidate, command)) {
       return candidate;
     }
   }

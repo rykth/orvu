@@ -87,3 +87,23 @@ test("with no program to run, the command says what to do and fails", () => {
     fs.rmSync(home, { recursive: true, force: true });
   }
 });
+
+// Another copy of this command, first on the PATH, would be found as the
+// program and would find the next copy in turn. The stand-in here counts how
+// deep it has gone and gives up at three, so that the test cannot run away.
+test("a copy of the command on the PATH is not run in a loop", () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "orvu-launcher-"));
+  try {
+    fs.writeFileSync(
+      path.join(folder, "orvud"),
+      `#!/bin/sh\nn=\${DEPTH:-0}\nif [ "$n" -ge 3 ]; then echo looped >&2; exit 9; fi\nDEPTH=$((n + 1)) exec "${process.execPath}" "${LAUNCHER}" "$@"\n`,
+      { mode: 0o755 },
+    );
+    const ran = spawnSync(process.execPath, [LAUNCHER, "--version"], { encoding: "utf8", env: { PATH: folder, HOME: folder }, timeout: 30_000 });
+    assert.notEqual(ran.status, 0);
+    assert.doesNotMatch(ran.stderr, /looped/);
+    assert.match(ran.stderr, /another copy of this command/);
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});

@@ -123,3 +123,25 @@ test("on a machine with no sidecar package, it says to connect over the network"
     done();
   }
 });
+
+// The package's own `orvud` command is on the PATH wherever npm puts the
+// commands of installed packages. It runs the program, so taking it for the
+// program would start it again and again.
+test("the package's own orvud command on the PATH is not taken for the program", () => {
+  const { root, from, done } = project();
+  try {
+    const command = path.join(root, "node_modules", "orvu", "dist", "orvud.js");
+    fs.writeFileSync(command, "#!/usr/bin/env node\n", { mode: 0o755 });
+    const bin = path.join(root, "node_modules", ".bin");
+    fs.mkdirSync(bin);
+    fs.symlinkSync(command, path.join(bin, "orvud"));
+    assert.equal(program({ PATH: bin }, { from, ...linux }), path.join(bin, "orvud"));
+    assert.throws(() => program({ PATH: bin }, { from, command, ...linux }), /no orvud program/);
+    // A real program further along the PATH is still found.
+    const folder = onPath(root);
+    const both = [bin, folder].join(path.delimiter);
+    assert.equal(program({ PATH: both }, { from, command, ...linux }), path.join(folder, "orvud"));
+  } finally {
+    done();
+  }
+});

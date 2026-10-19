@@ -16,6 +16,18 @@ import { spawn } from "node:child_process";
 import { SidecarUnavailable } from "./errors.ts";
 import { program } from "./sidecar.ts";
 
+// Set for the program this command runs. If it is set already, the program
+// found was another copy of this command, such as one installed elsewhere
+// and first on the PATH, and running it would only find the next copy.
+const LAUNCHED = "ORVUD_LAUNCHED_BY";
+if (process.env[LAUNCHED]) {
+  console.error(
+    `orvud: the orvud found was another copy of this command (run from ${process.env[LAUNCHED]}), not the program. ` +
+      "Set $ORVUD_BIN to the program, or install the sidecar package for this machine",
+  );
+  process.exit(1);
+}
+
 let file: string;
 try {
   file = program();
@@ -27,7 +39,10 @@ try {
   process.exit(1);
 }
 
-const child = spawn(file, process.argv.slice(2), { stdio: "inherit" });
+const child = spawn(file, process.argv.slice(2), {
+  stdio: "inherit",
+  env: { ...process.env, [LAUNCHED]: process.argv[1] },
+});
 
 // A signal sent to this command is passed on to the program, which decides
 // what to do with it. Ctrl-C reaches the program by itself as well; a second
