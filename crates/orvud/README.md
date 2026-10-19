@@ -1025,8 +1025,10 @@ async fn main() {
 - **A local sidecar has a machine number of its own,** picked at random the
   first time and kept in the file `replica` in the data folder. Two machines
   must never share a number, so the folder also notes which computer it is
-  used on, in the file `computer`: a value worked out from `/etc/machine-id`,
-  never the id itself. A folder whose note names another computer was copied
+  used on, in the file `computer`: a value worked out from the computer's
+  id, never the id itself. On Linux that id is `/etc/machine-id`; on a Mac
+  it is the hardware id the system gives, the one System Information shows
+  as "Hardware UUID". A folder whose note names another computer was copied
   or moved, and `orvud --local` refuses it. The message gives the command to
   run, with the folder spelled out; a folder whose name is not valid text
   is spelled byte by byte in `$'...'` quotes, as bash and zsh read them. If
@@ -1072,11 +1074,13 @@ async fn main() {
   has used up can only read that object. Either way the reply is a failure
   whose detail says so, and the Python and TypeScript libraries raise it as
   an `EngineError` with that message.
-- **Only the machine id tells computers apart.** A host name is not used: it
-  can change under a computer that stays the same. Where `/etc/machine-id`
-  cannot be read, as on macOS or in a container that has none, no note is
+- **Only the computer's id tells computers apart.** A host name is not used:
+  it can change under a computer that stays the same. Where the id cannot be
+  read, as in a Linux container that has no `/etc/machine-id`, no note is
   written and none is checked, so a copied folder is not caught there. Keep
-  one copy of a data folder in use at a time on such a computer.
+  one copy of a data folder in use at a time on such a computer. A folder
+  made before its computer's id could be read has no note, and is taken to
+  belong to the computer it is next started on.
 - **A computer whose machine id changes** looks like another computer to its
   own data folder, for example a container with its own `/etc/machine-id`
   that is made again over the same folder. Start it once with `--moved`; the

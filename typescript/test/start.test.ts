@@ -566,7 +566,8 @@ test("the idle time can be set in the environment", () =>
     const client = await connect();
     await client.counter("visits").increment(1);
     const [pid] = sidecars(home);
-    assert.ok(fs.readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("--exit-when-idle\x001\x00"));
+    const command = execFileSync("ps", ["-ww", "-o", "args=", "-p", String(pid)], { encoding: "utf8" });
+    assert.ok(command.includes("--exit-when-idle 1"), command);
     client.close();
     assert.ok(await waitUntil(() => sidecars(home).length === 0, 15));
   }));

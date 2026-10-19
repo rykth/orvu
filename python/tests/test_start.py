@@ -479,7 +479,8 @@ def test_the_idle_time_can_be_set_in_the_environment(home, monkeypatch):
     with orvu.connect() as client:
         client.counter("visits").increment(1)
         (pid,) = sidecars(home)
-        assert "--exit-when-idle\x001\x00" in pathlib.Path(f"/proc/{pid}/cmdline").read_text()
+        command = subprocess.run(["ps", "-ww", "-o", "args=", "-p", str(pid)], capture_output=True, text=True).stdout
+        assert "--exit-when-idle 1" in command, command
     assert wait_until(lambda: not sidecars(home), seconds=15)
 
 

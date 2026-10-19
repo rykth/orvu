@@ -512,13 +512,45 @@ fn fingerprint(computer: &str) -> String {
     digest.as_ref().iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-/// Which computer this is: its machine id from `/etc/machine-id`, or `None`
-/// if that cannot be read. A host name is not used in its place: it can
-/// change under a computer that stays the same, as it does on a laptop that
-/// joins another network or in a container made again over the same folder,
-/// and the computer's own folder would then look copied.
+/// Which computer this is, or `None` if it cannot be told. On Linux that is
+/// its machine id from `/etc/machine-id`. A Mac has no such file, and gives
+/// its hardware id instead, the one System Information shows as "Hardware
+/// UUID". A host name is not used in place of either: it can change under a
+/// computer that stays the same, as it does on a laptop that joins another
+/// network or in a container made again over the same folder, and the
+/// computer's own folder would then look copied.
 pub fn this_computer() -> Option<String> {
-    computer_of(std::fs::read_to_string("/etc/machine-id").ok())
+    #[cfg(target_os = "macos")]
+    {
+        hardware_computer(hardware_id())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        computer_of(std::fs::read_to_string("/etc/machine-id").ok())
+    }
+}
+
+/// The Mac's hardware id, or `None` if the system does not give it within a
+/// second.
+#[cfg(target_os = "macos")]
+fn hardware_id() -> Option<[u8; 16]> {
+    let mut id = [0u8; 16];
+    let wait = libc::timespec { tv_sec: 1, tv_nsec: 0 };
+    // SAFETY: `id` has room for the 16 bytes the call writes, and `wait`
+    // lives for the whole call.
+    let done = unsafe { libc::gethostuuid(id.as_mut_ptr(), &wait) };
+    (done == 0).then_some(id)
+}
+
+/// Which computer has the hardware id `id`. An id of all zeros names none.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn hardware_computer(id: Option<[u8; 16]>) -> Option<String> {
+    let id = id?;
+    if id == [0u8; 16] {
+        return None;
+    }
+    let hex: String = id.iter().map(|byte| format!("{byte:02x}")).collect();
+    Some(format!("hardware-id {hex}"))
 }
 
 /// Which computer has the machine id `id`, as `/etc/machine-id` held it.
@@ -711,6 +743,17 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         assert!(fuse_kind(folder.path()).is_some_and(|kind| !kind.is_empty()));
         assert_eq!(fuse_kind(Path::new("/proc/self")).as_deref(), Some("proc"));
+    }
+
+    #[test]
+    fn a_mac_is_named_by_its_hardware_id() {
+        assert_eq!(hardware_computer(None), None);
+        assert_eq!(hardware_computer(Some([0; 16])), None);
+        let id = [0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0, 1, 2, 3, 4, 5, 6, 7];
+        assert_eq!(
+            hardware_computer(Some(id)).as_deref(),
+            Some("hardware-id 123456789abcdef00001020304050607")
+        );
     }
 
     #[test]

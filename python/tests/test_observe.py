@@ -11,6 +11,7 @@ from conftest import Sidecar, short_folder
 from ports import free_port
 
 import orvu
+from orvu import _sidecar
 
 
 def number(page, name):
@@ -59,7 +60,7 @@ def test_with_no_settings_file_there_is_no_log(sidecar):
 # A mistake in the settings file of a sidecar a program starts by itself is
 # reported at once, and says where it is.
 def test_a_mistake_in_the_settings_file_is_reported_at_once(home):
-    data = home / ".local" / "share" / "orvu"
+    data = _sidecar.default_data_dir()
     data.mkdir(mode=0o700, parents=True)
     (data / "orvud.toml").write_text('[logs]\nlevel = "loud"\n')
     started = time.monotonic()
