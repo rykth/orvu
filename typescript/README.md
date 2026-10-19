@@ -26,26 +26,33 @@ or a container" below. It does not run in a browser.
 
 ## How to use it
 
-The package is not published yet. Build it, with `orvud` inside, from this
-repository, and install the file that comes out:
+Once it is published, `npm install orvu` is all it takes. Until then, build
+it from this repository and install the two files that come out together:
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvu-0.1.0-linux-x64.tgz
+npm install typescript/release/orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
-The file is named for the kind of machine it was built on, and works on that
-kind only: Linux or a Mac, on Intel or ARM. npm refuses to install it on
-another kind. There is nothing else to set up.
+`orvu` is the library, the same on every machine. `orvud` comes in a
+package of its own for each kind of machine: `@orvuhq/orvud-linux-x64`,
+`-linux-arm64`, `-darwin-arm64` and `-darwin-x64`. The library names all
+four as optional, and npm installs only the one that fits, so on Linux or a
+Mac, on Intel or ARM, there is nothing else to set up. The second file above
+is named for the kind of machine it was built on, and npm refuses to install
+it on another kind. On Windows none fits, and the library connects to an
+`orvud` elsewhere over the network instead.
 The first `connect()` starts `orvud` in the background, and every program you
 run after that shares it, whether it is written in TypeScript or in Python.
 
 [`examples/quickstart.mjs`](examples/quickstart.mjs) is the shortest program
 that uses Orvu. Run it twice: the second run sees what the first one wrote.
 
-`connect()` looks for `orvud` in `$ORVUD_BIN`, then inside this package, then
-on the `PATH`. The package also gives a command, `orvud`, for running it by
-hand, as in `npx --no-install orvud setup` for a team on several machines.
+`connect()` looks for `orvud` in `$ORVUD_BIN`, then in the
+`@orvuhq/orvud-...` package for this kind of machine, then on the `PATH`. The
+package also gives a command, `orvud`, for running it by hand, as in
+`npx --no-install orvud setup` for a team on several machines. The command
+finds `orvud` the same way and runs it with what you typed after it.
 Without `--no-install`, `npx` run outside your project would fetch whatever
 package of that name it finds online.
 
@@ -262,7 +269,9 @@ a connection file the sidecar's owner made with `orvud agent add alice
 started with `--network 0.0.0.0:7441`. The agent connects with
 `Team.connect("default", { connection: "alice.orvu" })`, or with the path in
 `ORVU_CONNECT`, and needs nothing else. The connection is encrypted, and
-trusts only that sidecar. Agents on Windows connect this way.
+trusts only that sidecar. Agents on Windows connect this way: `npm install
+orvu` there brings the library and no `orvud`, as there is none for Windows
+yet.
 
 ## The eleven kinds of object
 
@@ -623,30 +632,42 @@ that folder's path should be short. The tests that link machines also listen
 on network ports of this computer, on `127.0.0.1`, and cannot run where that
 is not allowed.
 
-`scripts/build-package.sh` builds the package for release, with the sidecar
-inside it. `scripts/clean-test.sh` installs such a package into an empty
-folder, with an empty home folder, and runs what a new user would: the
-quickstart twice, a team, and a team on two machines. Run it in a container
-too, to test it on Node 20:
+`scripts/build-package.sh` builds the packages for release, in `release/`:
+the library, `orvu-0.1.0.tgz`, and the sidecar package for the kind of
+machine it runs on, such as `orvuhq-orvud-linux-x64-0.1.0.tgz`. A release
+needs the sidecar package built on each of the four kinds of machine, and
+the library once. Only the library that is built names the sidecar packages,
+as optional, at its own version: the `package.json` here does not, so that
+`npm install` and `npm ci` here never ask for them.
+
+`scripts/clean-test.sh` installs the two files into an empty folder, with an
+empty home folder, and runs what a new user would: the quickstart twice, a
+team, and a team on two machines. It also installs the library alone, and
+checks that it says which sidecar package to install. Until the sidecar
+packages are published, npm looks for them online, finds none, and skips
+them, as it does any optional package it cannot get; the file given for this
+machine stands in for its package. Run it in a container too, to test it on
+Node 20:
 
 ```text
-sh typescript/scripts/clean-test.sh typescript/release/orvu-0.1.0-linux-x64.tgz
+sh typescript/scripts/clean-test.sh typescript/release/orvu-0.1.0.tgz \
+    typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 docker run --rm -v "$PWD/typescript":/src:ro node:20-slim \
-    sh /src/scripts/clean-test.sh /src/release/orvu-0.1.0-linux-x64.tgz
+    sh /src/scripts/clean-test.sh /src/release/orvu-0.1.0.tgz \
+    /src/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
-`scripts/build-package.sh --without-sidecar` builds the package with no
-sidecar inside, and no `orvud` command, `release/orvu-0.1.0.tgz`, for
-Windows. It says it is for Windows only, so that npm on another machine never
-takes it in place of the package with the sidecar inside, and it needs no
-Rust to build. `scripts/clean-test-network.sh` installs it into an empty
-folder, with an empty home folder, connects it to the sidecar built from this
-repository over the network with nothing but a connection file, and, with
-Node told it is on Windows, checks that asking it for a sidecar of its own
-says to connect over the network. It has not been tried on Windows itself.
+`scripts/build-package.sh --main-only` builds only the library, and needs no
+Rust. `scripts/clean-test-network.sh` installs it into an empty folder, with
+an empty home folder and npm told it is on Windows, so that no sidecar
+package comes with it. It connects the library to the sidecar built from
+this repository over the network with nothing but a connection file, and,
+with Node told it is on Windows, checks that asking for a sidecar of its own,
+or running the `orvud` command, says to connect over the network. It has not
+been tried on Windows itself.
 
 ```text
-sh typescript/scripts/build-package.sh --without-sidecar
+sh typescript/scripts/build-package.sh --main-only
 sh typescript/scripts/clean-test-network.sh typescript/release/orvu-0.1.0.tgz
 ```
 

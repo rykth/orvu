@@ -53,17 +53,24 @@ elsewhere with a connection file.
 
 ## TypeScript
 
-The npm package is not published yet. Build it, with the sidecar inside,
-from this repository. That needs Rust, `protoc`, Node and npm, and on Linux
-also `cargo zigbuild` (see [the TypeScript package's README](../../typescript/README.md#working-on-this-package)):
+Once the npm package is published, it is `npm install orvu`. That brings
+the library and, on Linux or a Mac, on Intel or ARM, the sidecar for that
+machine, which comes in a package of its own such as
+`@orvuhq/orvud-linux-x64`. On Windows it brings the library only, which
+connects to a sidecar elsewhere with a connection file.
+
+Until then, build the two from this repository. That needs Rust, `protoc`,
+Node and npm, and on Linux also `cargo zigbuild` (see [the TypeScript
+package's README](../../typescript/README.md#working-on-this-package)):
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvu-0.1.0-linux-x64.tgz
+npm install typescript/release/orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
-The file is named for the kind of machine it was built on, and works on that
-kind only: Linux or a Mac, on Intel or ARM.
+The second file is named for the kind of machine it was built on, and works
+on that kind only. `sh typescript/scripts/build-package.sh --main-only`
+builds the library alone, on any machine, for Windows.
 
 The package gives the command `orvud` too. Run it with
 `npx --no-install orvud ...`, so that `npx` never fetches some other package
