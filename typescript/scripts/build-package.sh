@@ -125,7 +125,7 @@ cat > "$SIDECAR/package.json" <<EOF
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/orvuhq/orvu.git",
+    "url": "git+https://github.com/rykth/orvu.git",
     "directory": "typescript"
   },
   "os": ["$OS"],
