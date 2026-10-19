@@ -104,8 +104,18 @@ def test_a_copied_data_folder_is_explained_with_the_command_to_run(home):
     said = str(raised.value)
     assert "copied from another computer" in said, said
     for flag in ("--moved", "--new-number"):
-        assert f"orvud --local --data-dir {data.resolve()} {flag}" in said, said
+        assert f"orvud --local --data-dir {quoted(data.resolve())} {flag}" in said, said
     assert sidecars(home) == []
+
+
+def quoted(folder):
+    """`folder` as the sidecar writes it into a command to copy: as it is if
+    every character is plain, in single quotes if not, as a folder on a Mac
+    is, with the space in "Application Support"."""
+    text = str(folder)
+    if all(c.isascii() and (c.isalnum() or c in "/._-+,:@%") for c in text):
+        return text
+    return "'" + text.replace("'", "'\\''") + "'"
 
 
 # With no runtime folder the socket goes inside the data folder, and a socket
