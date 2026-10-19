@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package orvu.v1;
+
+import "orvu/v1/core.proto";
+import "orvu/v1/crdt.proto";
+
+// The whole current state of one object, saved to disk so that the older
+// deltas can be thrown away. `payload` is the full state, encoded the same way
+// as the payload of a `Delta` of `crdt_type`. `context` lists every update
+// that state includes.
+message SnapshotObject {
+  string object_id = 1;
+  CrdtType crdt_type = 2;
+  bytes payload = 3;
+  DotContext context = 4;
+}

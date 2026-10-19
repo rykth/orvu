@@ -1,0 +1,35 @@
+[package]
+name = "orvu-runtime"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+
+[dependencies]
+orvu-core = { path = "../orvu-core" }
+orvu-crdt = { path = "../orvu-crdt" }
+orvu-proto = { path = "../orvu-proto" }
+orvu-transport = { path = "../orvu-transport" }
+orvu-store = { path = "../orvu-store" }
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt", "sync", "time", "macros", "io-util", "net"] }
+tokio-util = "0.7"
+tracing = "0.1"
+ring = "0.17"
+
+[dev-dependencies]
+orvu-test-support = { path = "../orvu-test-support" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "io-util", "test-util"] }
+proptest = "1"
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+tempfile = "3"
+tracing-subscriber = "0.3"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(orvu_loom)'] }
+
+# The setting is called `orvu_loom`, not `loom`. Tokio reacts to a global
+# `--cfg loom` by leaving out `tokio::net`, for its own loom tests, and that
+# breaks the libraries this module depends on. A name of our own avoids it.
+[target.'cfg(orvu_loom)'.dependencies]
+loom = "0.7"

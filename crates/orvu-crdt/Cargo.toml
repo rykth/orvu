@@ -1,0 +1,11 @@
+[package]
+name = "orvu-crdt"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.75"
+license.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+proptest = "1"

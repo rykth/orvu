@@ -1,0 +1,20 @@
+[package]
+name = "orvu-transport"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+
+[dependencies]
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt", "sync", "net", "time", "io-util", "macros"] }
+tokio-util = "0.7"
+quinn = "0.11"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rcgen = "0.13"
+thiserror = "2"
+x509-parser = "0.16"
+
+[dev-dependencies]
+orvu-test-support = { path = "../orvu-test-support" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "io-util"] }

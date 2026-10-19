@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["crates/orvu-crdt", "crates/orvu-proto", "crates/orvu-core", "crates/orvu-store", "crates/orvu-transport", "crates/orvu-runtime", "crates/orvu-sdk", "crates/orvud", "crates/orvu-test-support", "crates/orvu-search"]
+
+[workspace.package]
+license = "Apache-2.0"

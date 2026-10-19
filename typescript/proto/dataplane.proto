@@ -1,0 +1,384 @@
+syntax = "proto3";
+
+// The gRPC API between a program and the sidecar on the same machine. It is
+// kept apart from the messages that machines send each other (core.proto,
+// crdt.proto, sync.proto, snapshot.proto). Those describe replication between
+// engines and must not gain a service definition.
+package orvu.dataplane.v1;
+
+service DataPlane {
+  rpc Open    (OpenRequest)  returns (OpenResponse);
+  rpc Execute (Request)      returns (Response);
+  rpc Batch   (BatchRequest) returns (BatchResponse);
+  rpc Watch   (WatchRequest) returns (stream WatchEvent);
+}
+
+message OpenRequest {
+  // The namespace this session works in. One sidecar runs one engine, so it
+  // serves one namespace. Send that name, or leave it empty to mean "whatever
+  // this sidecar serves". Any other name is rejected with INVALID_ARGUMENT.
+  // The sidecar never serves its own namespace to a session that asked for a
+  // different one.
+  //
+  // A resume_token is tied to the exact namespace text it was opened with. A
+  // client that opens with "" and comes back with the real name gets a new
+  // session.
+  string namespace = 1;
+  // Empty means "new session". A token this sidecar does not know also gives
+  // a new session and never an error, because after a restart there is nothing
+  // to resume.
+  string resume_token = 2;
+  // An agent's key, as `orvud agent add` printed it, or empty. While the
+  // sidecar names no agents, it is empty and the socket's file permissions
+  // alone decide who may connect. Once the sidecar names agents, a key is
+  // needed, and the session belongs to the agent whose key it is. A key the
+  // sidecar does not know, a missing one, or one given to a sidecar with no
+  // agents is refused with PERMISSION_DENIED, and so is every program once
+  // the last agent was removed. Space around the key is not part of it.
+  bytes credential = 3;
+}
+
+message OpenResponse {
+  string session = 1;
+  string resume_token = 2;
+  uint64 replica_id = 3;
+  // The version of the sidecar that answered, such as "0.1.0".
+  string version = 4;
+  // The agent whose key was given, or empty if none was. The sidecar checked
+  // it, so a program can use it as its name.
+  string agent = 5;
+  // The process id of the sidecar that answered, so that a program can say
+  // which process to stop, as when the sidecar is of another release. It
+  // means something only on the sidecar's own machine.
+  uint32 pid = 6;
+}
+
+// ---- reads -------------------------------------------------------------
+
+// `Absent` means "nothing there". It is the answer to any read of an object
+// that does not exist: a read never creates one. It is also the answer for a
+// register that was never set. It is not the same as an empty string, and a
+// client must be able to tell "unset" from "set to the empty string".
+message Absent {}
+message StringList { repeated string values = 1; }
+message Pair { string key = 1; string value = 2; }
+message PairList { repeated Pair pairs = 1; }
+message CountedItem { string item = 1; int64 qty = 2; }
+message CountedList { repeated CountedItem items = 1; }
+// A key with every value it holds. More than one value means writes made at
+// the same time clashed and nothing has settled it yet.
+message MultiPair { string key = 1; repeated string values = 2; }
+message MultiPairList { repeated MultiPair pairs = 1; }
+
+// A large read (`set_elements`, `list_to_vec`, or `json_to_value` on a big
+// document) travels as one message, and by default gRPC will not decode a
+// message over about 4 MiB. A read above that fails in the client's decoder,
+// not in the sidecar. Raise `max_decoding_message_size` on the client channel
+// if an object can get that big. A read cannot be split into pages.
+message ReadValue {
+  oneof v {
+    int64       int_value    = 1;
+    string      string_value = 2;
+    bool        bool_value   = 3;
+    StringList  strings      = 4;
+    PairList    pairs        = 5;
+    CountedList counted      = 6;
+    Absent      absent       = 7;
+    // Complex reads travel as JSON text (json_to_value, richtext_to_spans,
+    // tree_to_nodes).
+    string      json         = 8;
+    MultiPairList multi_pairs = 9;
+  }
+}
+
+// ---- results -----------------------------------------------------------
+
+enum Code {
+  CODE_UNSPECIFIED       = 0;
+  CODE_TYPE_MISMATCH     = 1;
+  CODE_CLASS_MISMATCH    = 2;
+  CODE_OUT_OF_BOUNDS     = 3;
+  CODE_ENGINE            = 4;
+  CODE_JSON              = 5;
+  CODE_CONFIG            = 6;
+  // The op was not run, because the replies of the batch it is in had
+  // already passed the size limit.
+  CODE_TOO_LARGE         = 7;
+  // Search by meaning cannot be done: the model it needs could not be
+  // fetched or read, or this sidecar does not search.
+  CODE_NO_SEARCH         = 8;
+}
+
+message Ack {}
+// The engine said no, the rule it protects held, and your state is as it was.
+// This is never a gRPC error status. A generated client turns a non-OK status
+// into an exception, and then a refusal would look the same as a failure.
+message Refused { string detail = 1; }
+message Failed { Code code = 1; string detail = 2; }
+
+// `result` is always set. The sidecar never returns a `Response` with the
+// oneof left empty (a oneof holds exactly one of its listed fields). So a
+// generated client may treat "none of the above" as a protocol error and does
+// not need to handle it as a normal case.
+message Response {
+  oneof result {
+    Ack        ack       = 1;
+    ReadValue  value     = 2;
+    Refused    refused   = 3;
+    Failed     failed    = 4;
+  }
+}
+
+// ---- ops ---------------------------------------------------------------
+
+enum Class { CLASS_UNSPECIFIED = 0; CLASS_AP = 1; CLASS_ESCROW = 2; }
+
+message Declare          { string object = 1; Class object_class = 2; }
+message CounterIncrement { string object = 1; uint64 n = 2; }
+message CounterDecrement { string object = 1; uint64 n = 2; }
+message CounterValue     { string object = 1; }
+message RegisterSet      { string object = 1; string value = 2; }
+message RegisterGet      { string object = 1; }
+message SetAdd           { string object = 1; string member = 2; }
+message SetRemove        { string object = 1; string member = 2; }
+message SetContains      { string object = 1; string member = 2; }
+message SetElements      { string object = 1; }
+
+message MapPut     { string object = 1; string key = 2; string value = 3; }
+message MapRemove  { string object = 1; string key = 2; }
+message MapGet     { string object = 1; string key = 2; }
+message MapKeys    { string object = 1; }
+message MapEntries { string object = 1; }
+
+// Quantities in requests are unsigned, but reads are signed (see
+// CountedItem.qty and CartQuantity). A cart quantity can read as negative
+// after two machines remove at the same time. That is a real result of
+// combining their changes, and the app must see it.
+message CartAdd        { string object = 1; string item = 2; uint64 qty = 3; }
+message CartRemoveQty  { string object = 1; string item = 2; uint64 qty = 3; }
+message CartRemoveItem { string object = 1; string item = 2; }
+message CartQuantity   { string object = 1; string item = 2; }
+message CartItems      { string object = 1; }
+
+message ListInsert { string object = 1; uint64 index = 2; string value = 3; }
+message ListDelete { string object = 1; uint64 index = 2; }
+message ListGet    { string object = 1; uint64 index = 2; }
+message ListLen    { string object = 1; }
+message ListToVec  { string object = 1; }
+
+// `path_json` is a JSON array of path segments (a string is a key, a
+// non-negative integer is an index) and `value_json` is a JSON value. Both
+// are sent as text. Text that does not parse gives Code JSON.
+message JsonSet     { string object = 1; string path_json = 2; string value_json = 3; }
+message JsonRemove  { string object = 1; string path_json = 2; }
+message JsonGet     { string object = 1; string path_json = 2; }
+message JsonToValue { string object = 1; }
+// Puts a value into the list at `path_json`, at position `index`. What was
+// at that position and after it moves up by one. An index equal to the
+// list's length adds to its end. Where there is nothing yet, index 0 starts
+// a list. Where there is something that is not a list, it fails with Code
+// JSON and changes nothing.
+message JsonInsert  { string object = 1; string path_json = 2; uint64 index = 3; string value_json = 4; }
+
+// Every index and length here counts Unicode code points. A language whose
+// strings are UTF-16 (Java, C#, JavaScript) must convert before calling.
+message RichtextInsert   { string object = 1; uint64 index = 2; string text = 3; }
+message RichtextDelete   { string object = 1; uint64 index = 2; uint64 len = 3; }
+// `value` must not be empty. A format with an empty value is rejected with
+// INVALID_ARGUMENT. To remove a mark, use RichtextUnformat.
+message RichtextFormat   { string object = 1; uint64 index = 2; uint64 len = 3; string attr = 4; string value = 5; }
+message RichtextUnformat { string object = 1; uint64 index = 2; uint64 len = 3; string attr = 4; }
+message RichtextText     { string object = 1; }
+message RichtextToSpans  { string object = 1; }
+// Puts `text` in at `index` and sets the mark `attr` to `value` on exactly
+// the characters it put in, as one change. The mark is tied to those
+// characters and not to their place, so text another agent puts in at the
+// same moment never takes it, and this text never goes without it. `value`
+// must not be empty, as for RichtextFormat.
+message RichtextInsertMarked { string object = 1; uint64 index = 2; string text = 3; string attr = 4; string value = 5; }
+
+message TreeMoveNode   { string object = 1; string child = 2; string new_parent = 3; }
+message TreeMoveNodeAt { string object = 1; string child = 2; string new_parent = 3; uint64 index = 4; }
+message TreeSetLabel   { string object = 1; string node = 2; string label = 3; }
+message TreeChildren   { string object = 1; string node = 2; }
+// The parent of one node, or Absent for the top and for a node that was
+// never placed.
+message TreeParent     { string object = 1; string node = 2; }
+message TreeToNodes    { string object = 1; }
+
+// A map that keeps every value written to a key at the same time, until a
+// later write that has seen them replaces them. A get answers with the values
+// (none if the key is not there), and an entries read with multi_pairs.
+message MvMapPut     { string object = 1; string key = 2; string value = 3; }
+message MvMapRemove  { string object = 1; string key = 2; }
+message MvMapGet     { string object = 1; string key = 2; }
+message MvMapKeys    { string object = 1; }
+message MvMapEntries { string object = 1; }
+
+message BoundedIncrement    { string object = 1; uint64 n = 2; }
+// Can be refused. A refusal arrives as Response.refused, never as a gRPC
+// status: "the rule held and your state is intact" must not look like "the
+// call failed and your state is unknown".
+message BoundedTryDecrement { string object = 1; uint64 n = 2; }
+// Can be refused in the same way, when the caller's allowance cannot cover n.
+// `to_replica` must be set. proto3 cannot tell a number that was left out from
+// 0, and 0 is a real replica id. A client that forgets the field transfers
+// allowance to ReplicaId(0) and gets no error. The sidecar cannot detect this.
+message BoundedTransfer     { string object = 1; uint64 to_replica = 2; uint64 n = 3; }
+message BoundedValue        { string object = 1; }
+// How much this replica itself may still decrement.
+message BoundedAllowance    { string object = 1; }
+
+// Finds the notes and documents of a team that are closest in meaning to
+// `query`, the closest first. `object` is the team's index,
+// orvu/<team>/index, which says which team. At most `limit` are found: 5 if
+// it is 0, and it may not be over 50. The answer is JSON text, a list of
+// {"kind", "name", "text", "score"}, where kind is "note", "structured" or
+// "document", a document's has its "paragraph" too, and score is from 0 to 1.
+// Only what the session's agent may read is found. A search cannot be part
+// of a batch.
+message Search { string object = 1; string query = 2; uint32 limit = 3; }
+
+// ---- request ids --------------------------------------------------------
+//
+// A change sent again, because its answer never came, would be made twice.
+// So a client gives each call that changes something an id of its own,
+// 16 random bytes, and sends the same id when it sends that call again. The
+// sidecar remembers the answer it gave to each id for ten minutes, and a
+// call with an id it knows is answered with that answer and not made again.
+// An id is the caller's agent's own: another agent's call with the same id
+// is a call of its own.
+//
+// The note that a change was made under an id is saved in the same step as
+// the change, so a sidecar that stopped after saving a change, before it
+// could answer, still knows after a restart that it was made. After a
+// restart it knows only that, and answers a change it made with `ack`.
+//
+// It holds for ten minutes, and for the last 10,000 ids of each agent. A
+// call sent again after that is made again. Leaving the id out, as old
+// clients do, means the call is made each time it arrives. At most 64 bytes;
+// a longer one is rejected with INVALID_ARGUMENT.
+
+message Request {
+  string session = 1;
+  // See "request ids" above. In a request that is part of a batch it is
+  // not used: the batch's own id counts.
+  bytes request_id = 2;
+  oneof op {
+    Declare          declare           = 10;
+    CounterIncrement counter_increment = 11;
+    CounterDecrement counter_decrement = 12;
+    CounterValue     counter_value     = 13;
+    RegisterSet      register_set      = 14;
+    RegisterGet      register_get      = 15;
+    SetAdd           set_add           = 16;
+    SetRemove        set_remove        = 17;
+    SetContains      set_contains      = 18;
+    SetElements      set_elements      = 19;
+    MapPut           map_put           = 20;
+    MapRemove        map_remove        = 21;
+    MapGet           map_get           = 22;
+    MapKeys          map_keys          = 23;
+    CartAdd          cart_add          = 24;
+    CartRemoveQty    cart_remove_qty   = 25;
+    CartRemoveItem   cart_remove_item  = 26;
+    CartQuantity     cart_quantity     = 27;
+    CartItems        cart_items        = 28;
+    MapEntries       map_entries       = 29;
+    ListInsert       list_insert       = 30;
+    ListDelete       list_delete       = 31;
+    ListGet          list_get          = 32;
+    ListLen          list_len          = 33;
+    ListToVec        list_to_vec       = 34;
+    JsonSet          json_set          = 40;
+    JsonRemove       json_remove       = 41;
+    JsonGet          json_get          = 42;
+    JsonToValue      json_to_value     = 43;
+    JsonInsert       json_insert       = 44;
+    RichtextInsert   richtext_insert   = 50;
+    RichtextDelete   richtext_delete   = 51;
+    RichtextFormat   richtext_format   = 52;
+    RichtextUnformat richtext_unformat = 53;
+    RichtextText     richtext_text     = 54;
+    RichtextToSpans  richtext_to_spans = 55;
+    TreeMoveNode     tree_move_node    = 60;
+    TreeMoveNodeAt   tree_move_node_at = 61;
+    TreeSetLabel     tree_set_label    = 62;
+    TreeChildren     tree_children     = 63;
+    TreeToNodes      tree_to_nodes     = 64;
+    TreeParent       tree_parent       = 65;
+    BoundedIncrement    bounded_increment     = 70;
+    BoundedTryDecrement bounded_try_decrement = 71;
+    BoundedTransfer     bounded_transfer      = 72;
+    BoundedValue        bounded_value         = 73;
+    BoundedAllowance    bounded_allowance     = 74;
+    Search              search                = 80;
+    MvMapPut            mv_map_put            = 90;
+    MvMapRemove         mv_map_remove         = 91;
+    MvMapGet            mv_map_get            = 92;
+    MvMapKeys           mv_map_keys           = 93;
+    MvMapEntries        mv_map_entries        = 94;
+    RichtextInsertMarked richtext_insert_marked = 56;
+    // Field numbers are given out in blocks: map/cart 20-29, list 30-39,
+    // json 40-49, richtext 50-59, tree 60-69, bounded 70-79, search 80-89,
+    // mv_map 90-99.
+  }
+}
+
+// An inner `Request.session` must be empty (it then takes the batch's) or
+// equal to the batch's. A session id works like a password, and a mismatch
+// rejects the whole batch with INVALID_ARGUMENT before anything is applied.
+//
+// The same goes for every other envelope failure: a request with no op, or a
+// `Declare` that names an unknown `Class`. The envelope is the outer request
+// message, and all of these are checked before the first op runs. So an
+// INVALID_ARGUMENT on a Batch means your state is unchanged. An engine answer
+// is different. A refusal or failure partway through a batch is a `Response`
+// in `responses`, and the ops after it still run.
+//
+// A batch may hold at most 1024 requests. A longer one is rejected with
+// INVALID_ARGUMENT before anything is applied. Replies are collected until the
+// batch is done, up to 4 MiB of them. Once they pass that, the ops that are
+// left are not run and each gets CODE_TOO_LARGE.
+//
+// A batch that has started runs to the end even if the caller stops waiting
+// for it, so it is never left half applied by a caller's time limit.
+// A batch is one call: its `request_id` covers all of it, and a batch sent
+// again with the same id gets the same replies. After a restart, each part
+// that was saved is answered `ack` and the others are made.
+message BatchRequest  { string session = 1; repeated Request requests = 2; bytes request_id = 3; }
+// One result per request, in request order, each independent. Ops are not
+// merged and there is no transaction across them. A Batch is several ops
+// sharing one round trip, and one of them being refused says nothing about
+// the others.
+message BatchResponse { repeated Response responses = 1; }
+
+enum Kind {
+  KIND_UNSPECIFIED = 0;
+  KIND_COUNTER = 1;
+  KIND_REGISTER = 2;
+  KIND_SET = 3;
+  KIND_MAP = 4;
+  KIND_CART = 5;
+  KIND_LIST = 6;
+  KIND_JSON = 7;
+  KIND_RICHTEXT = 8;
+  KIND_BOUNDED = 9;
+  KIND_TREE = 10;
+  KIND_MV_MAP = 11;
+}
+
+// The SDK has a separate watch for each type, so the request says which kind
+// of object to watch.
+message WatchRequest { string session = 1; string object = 2; Kind kind = 3; }
+
+// If the engine cannot open the object (wrong kind, class mismatch), that
+// arrives as the first event and the stream then ends normally. Execute
+// reports the same failure as a `Response`. A gRPC status is used only for
+// envelope failures: an unknown session or a bad kind.
+message WatchEvent {
+  oneof event {
+    ReadValue value  = 1;
+    Failed    failed = 2;
+  }
+}

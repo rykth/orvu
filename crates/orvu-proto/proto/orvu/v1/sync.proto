@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package orvu.v1;
+
+import "orvu/v1/core.proto";
+import "orvu/v1/crdt.proto";
+import "orvu/v1/snapshot.proto";
+
+// One change to one object.
+message Delta {
+  string object_id = 1;
+  CrdtType crdt_type = 2;
+  // The name of this update. Getting the same dot a second time does nothing.
+  Dot dot = 3;
+  Hlc hlc = 4;
+  // What the author had seen before making this update. A receiver applies
+  // the delta only once it has seen all of that too.
+  DotContext deps = 5;
+  // The change itself, encoded in the format that `crdt_type` names.
+  bytes payload = 6;
+  // An id for following this change across machines in tracing tools: 16
+  // bytes, in the W3C format. Empty means the change is not traced.
+  bytes trace_id = 7;
+}
+
+message DeltaBatch {
+  string namespace = 1;
+  repeated Delta deltas = 2;
+}
+
+// The greeting a machine sends when it connects, and the answer to it. A
+// machine on a different `proto_version` is refused with a Nack whose reason
+// is NACK_REASON_PROTO_VERSION, because the same bytes can mean something
+// else to it.
+message Hello {
+  uint32 proto_version = 1;
+  uint64 replica = 2;
+  repeated string namespaces = 3;
+}
+
+message HelloAck {
+  uint32 proto_version = 1;
+  uint64 replica = 2;
+  repeated string accepted_namespaces = 3;
+}
+
+// Tells the other machine what the sender has seen by now, so it can stop
+// sending those updates again.
+message Ack {
+  string namespace = 1;
+  DotContext observed = 2;
+}
+
+// A request to catch up: "here is what I have seen for each object, send me
+// any delta I am missing." The answer is a DeltaBatch. For an object whose
+// deltas are no longer kept, the answer is a SnapshotBatch.
+message ContextDigest {
+  string namespace = 1;
+  // object_id -> what this sender has seen for that object.
+  map<string, DotContext> entries = 2;
+}
+
+// What is known about one machine in the group: its heartbeat, a number it
+// keeps raising to show it is alive, and what it has seen for each object. The
+// second part has the same shape as in ContextDigest.
+message MemberInfo {
+  uint64 replica = 1;
+  uint64 heartbeat = 2;
+  // object_id -> what this member has seen for that object.
+  map<string, DotContext> contexts = 3;
+}
+
+// Everything the sender knows about the machines in the group, itself
+// included. Machines pass this around among themselves. A receiver keeps, for
+// each member, the row with the higher heartbeat.
+message MembershipDigest {
+  repeated MemberInfo members = 1;
+}
+
+// Catch-up for a machine that is far behind: the whole current state of one or
+// more objects. It is used when the sender no longer has the individual deltas
+// to send.
+message SnapshotBatch {
+  string namespace = 1;
+  repeated SnapshotObject objects = 2;   // SnapshotObject is defined in snapshot.proto
+}
+
+// A machine that has used up its allowance on a counter that cannot go below
+// zero asks another machine for some. The other machine answers by
+// transferring allowance, which travels as an ordinary delta. There is no
+// reply message.
+message BorrowRequest {
+  string namespace = 1;
+  string object_id = 2;
+  uint64 amount    = 3;
+  uint64 from_replica = 4;   // the machine asking, which receives the allowance
+}
+
+// Sent on a connection that has had nothing else to send for about one
+// anti-entropy interval, so the other end can tell a machine that is only
+// busy from one that has stopped. It carries nothing, and the receiver does
+// nothing with it beyond counting it as something heard.
+//
+// A machine from before this message existed reads it as a wrapper with no
+// payload it knows, skips it as a message it cannot read, and keeps the
+// connection. The bytes still count as something heard there too.
+message KeepAlive {}
+
+// Newer versions may add reasons. A machine that gets a number it does not
+// know keeps it as an unknown reason. It does not read it as UNSPECIFIED,
+// and it does not refuse the message for it.
+enum NackReason {
+  NACK_REASON_UNSPECIFIED = 0;
+  NACK_REASON_UNKNOWN_CRDT_TYPE = 1;
+  NACK_REASON_UNKNOWN_NAMESPACE = 2;
+  NACK_REASON_PROTO_VERSION = 3;
+  NACK_REASON_MALFORMED_PAYLOAD = 4;
+  // A timestamp in the change is too far ahead of the receiver's clock.
+  NACK_REASON_CLOCK_AHEAD = 5;
+}
+
+// Says that the receiver refused something, and why. When it is about one
+// change, `object_id` and `dot` name that change, so the sender can tell
+// which change of a batch it was. `dot` is left out when the Nack is not
+// about one change, such as a refused greeting.
+//
+// A machine sends at most a few Nacks a second on one connection, so a flood
+// of bad changes does not become a flood of Nacks. The rest are only counted.
+// Nothing is sent back for a Nack.
+message Nack {
+  NackReason reason = 1;
+  string detail = 2;
+  string object_id = 3;
+  Dot dot = 4;
+}
+
+// The outer wrapper. Every message sent on a sync stream is one of these. It
+// is written with its length in front, as a varint, and each one travels in a
+// frame of its own. A frame that holds anything after the message is refused.
+message SyncMessage {
+  oneof payload {
+    Hello hello = 1;
+    HelloAck hello_ack = 2;
+    DeltaBatch delta_batch = 3;
+    Ack ack = 4;
+    Nack nack = 5;
+    ContextDigest context_digest = 6;
+    SnapshotBatch snapshot_batch = 7;
+    MembershipDigest membership_digest = 8;
+    BorrowRequest borrow_request = 9;
+    KeepAlive keep_alive = 10;
+  }
+}

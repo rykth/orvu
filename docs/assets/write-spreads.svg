@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" width="480" height="200" role="img" aria-label="A write on one machine spreads to the others">
+  <title>A write on one machine spreads to the others</title>
+  <style>
+  :root { --ink: #5B5BD6; --amb: #E0A21B; --txt: #5c5c70; --faint: #c9c9dc; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #8B8BF0; --amb: #F5C76A; --txt: #b4b4c8; --faint: #3a3a52; } }
+  .ring { fill: none; stroke: var(--ink); stroke-width: 3px; }
+  .path { fill: none; stroke: var(--faint); stroke-width: 1.5px; stroke-dasharray: 2 6; stroke-linecap: round; }
+  .ink { fill: var(--ink); }
+  .amb { fill: var(--amb); }
+  .wave { fill: none; stroke: var(--ink); stroke-width: 2px; }
+  .wave.amb { stroke: var(--amb); fill: none; }
+  .name { fill: var(--txt); font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .02em; }
+  .say { fill: var(--txt); font: 13px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .who { font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .who.ink { fill: var(--ink); }
+  .who.amb { fill: var(--amb); }
+  @keyframes k1 { 0.00% { opacity: 0 } 2.22% { opacity: 1 } 57.78% { opacity: 1 } 60.56% { opacity: 0 } 100% { opacity: 0 } }
+  @keyframes k2 { 0% { opacity: 0.0 } 8.33% { opacity: 0.0 } 11.11% { opacity: 1 } 61.11% { opacity: 1 } 63.89% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k3 { 0% { opacity: 0.0 } 32.78% { opacity: 0.0 } 35.56% { opacity: 1 } 61.11% { opacity: 1 } 63.89% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k4 { 0% { opacity: 0.0 } 37.22% { opacity: 0.0 } 40.00% { opacity: 1 } 61.11% { opacity: 1 } 63.89% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k5 { 0% { opacity: 0.0; transform: scale(1.0) } 13.22% { opacity: 0.0; transform: scale(1.0) } 13.33% { opacity: 0.6; transform: scale(1.0) } 25.56% { opacity: 0.0; transform: scale(1.7) } 100% { opacity: 0.0; transform: scale(1.7) } }
+  @keyframes k6 { 0% { transform: translate(0.00px, 0.00px) } 57.78% { transform: translate(0.00px, 0.00px) } 71.11% { transform: translate(143.45px, 17.56px) } 100% { transform: translate(143.45px, 17.56px) } }
+  @keyframes k7 { 0% { stroke-width: 3px } 57.78% { stroke-width: 3px } 71.11% { stroke-width: 8.5px } 100% { stroke-width: 8.5px } }
+  @keyframes k8 { 0% { opacity: 0.0; transform: scale(1.0) } 35.44% { opacity: 0.0; transform: scale(1.0) } 35.56% { opacity: 0.6; transform: scale(1.0) } 45.56% { opacity: 0.0; transform: scale(1.7) } 100% { opacity: 0.0; transform: scale(1.7) } }
+  @keyframes k9 { 0% { transform: translate(0.00px, 0.00px) } 57.78% { transform: translate(0.00px, 0.00px) } 71.11% { transform: translate(0.00px, -11.12px) } 100% { transform: translate(0.00px, -11.12px) } }
+  @keyframes k10 { 0% { stroke-width: 3px } 57.78% { stroke-width: 3px } 71.11% { stroke-width: 8.5px } 100% { stroke-width: 8.5px } }
+  @keyframes k11 { 0% { opacity: 0.0; transform: scale(1.0) } 39.89% { opacity: 0.0; transform: scale(1.0) } 40.00% { opacity: 0.6; transform: scale(1.0) } 50.00% { opacity: 0.0; transform: scale(1.7) } 100% { opacity: 0.0; transform: scale(1.7) } }
+  @keyframes k12 { 0% { transform: translate(0.00px, 0.00px) } 57.78% { transform: translate(0.00px, 0.00px) } 71.11% { transform: translate(-143.45px, 17.56px) } 100% { transform: translate(-143.45px, 17.56px) } }
+  @keyframes k13 { 0% { stroke-width: 3px } 57.78% { stroke-width: 3px } 71.11% { stroke-width: 8.5px } 100% { stroke-width: 8.5px } }
+  @keyframes k14 { 0% { opacity: 0 } 17.67% { opacity: 0 } 17.78% { opacity: 1 } 35.56% { opacity: 1 } 35.67% { opacity: 0 } 100% { opacity: 0 } }
+  @keyframes k15 { 0% { transform: translate(114.00px, 92.00px) } 17.78% { transform: translate(114.00px, 92.00px) } 35.56% { transform: translate(206.00px, 92.00px) } 100% { transform: translate(206.00px, 92.00px) } }
+  @keyframes k16 { 0% { opacity: 0 } 17.67% { opacity: 0 } 17.78% { opacity: 1 } 40.00% { opacity: 1 } 40.11% { opacity: 0 } 100% { opacity: 0 } }
+  @keyframes k17 { 0% { transform: translate(94.00px, 62.00px) } 17.78% { transform: translate(94.00px, 62.00px) } 20.56% { transform: translate(130.50px, 45.81px) } 23.33% { transform: translate(167.00px, 34.25px) } 26.11% { transform: translate(203.50px, 27.31px) } 28.89% { transform: translate(240.00px, 25.00px) } 31.67% { transform: translate(276.50px, 27.31px) } 34.44% { transform: translate(313.00px, 34.25px) } 37.22% { transform: translate(349.50px, 45.81px) } 40.00% { transform: translate(386.00px, 62.00px) } 100% { transform: translate(386.00px, 62.00px) } }
+  @keyframes k18 { 0% { opacity: 0.0 } 0.56% { opacity: 0.0 } 3.33% { opacity: 1 } 57.78% { opacity: 1 } 60.56% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k19 { 0% { opacity: 0.0 } 63.89% { opacity: 0.0 } 66.67% { opacity: 1 } 93.33% { opacity: 1 } 96.11% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k20 { 0% { opacity: 0.0 } 6.11% { opacity: 0.0 } 8.89% { opacity: 1 } 53.33% { opacity: 1 } 56.11% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @keyframes k21 { 0% { opacity: 0.0 } 66.11% { opacity: 0.0 } 68.89% { opacity: 1 } 93.33% { opacity: 1 } 96.11% { opacity: 0.0 } 100% { opacity: 0.0 } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .still { opacity: 1 !important; }  }
+  </style>
+  <g class="still" style="animation: k1 9.0s linear infinite; opacity: 0;">
+    <path class="path" d="M114 92H206M274 92H366"/>
+    <path class="path" d="M94 62Q240 -12 386 62"/>
+  </g>
+  <g transform="translate(80 92)"><g style="animation: k6 9.0s ease-in-out infinite;">
+    <circle class="ring" r="34" style="animation: k7 9.0s ease-in-out infinite;"/>
+    <circle class="ink still" r="8" style="animation: k2 9.0s linear infinite; opacity: 0.0;"/>
+    <circle class="wave" r="34" style="animation: k5 9.0s ease-out infinite; opacity: 0; transform-box: fill-box; transform-origin: center;"/>
+  </g></g>
+  <g transform="translate(240 92)"><g style="animation: k9 9.0s ease-in-out infinite;">
+    <circle class="ring" r="34" style="animation: k10 9.0s ease-in-out infinite;"/>
+    <circle class="ink still" r="8" style="animation: k3 9.0s linear infinite; opacity: 0.0;"/>
+    <circle class="wave" r="34" style="animation: k8 9.0s ease-out infinite; opacity: 0; transform-box: fill-box; transform-origin: center;"/>
+  </g></g>
+  <g transform="translate(400 92)"><g style="animation: k12 9.0s ease-in-out infinite;">
+    <circle class="ring" r="34" style="animation: k13 9.0s ease-in-out infinite;"/>
+    <circle class="ink still" r="8" style="animation: k4 9.0s linear infinite; opacity: 0.0;"/>
+    <circle class="wave" r="34" style="animation: k11 9.0s ease-out infinite; opacity: 0; transform-box: fill-box; transform-origin: center;"/>
+  </g></g>
+  <circle class="ink" r="6" style="opacity: 0; animation: k14 9.0s linear infinite, k15 9.0s linear infinite;"/>
+  <circle class="ink" r="6" style="opacity: 0; animation: k16 9.0s linear infinite, k17 9.0s linear infinite;"/>
+  <text class="name still" x="80" y="146" text-anchor="middle" style="animation: k18 9.0s linear infinite; opacity: 0.0;">alpha</text>
+  <text class="name still" x="240" y="146" text-anchor="middle" style="animation: k18 9.0s linear infinite; opacity: 0.0;">beta</text>
+  <text class="name still" x="400" y="146" text-anchor="middle" style="animation: k18 9.0s linear infinite; opacity: 0.0;">gamma</text>
+  <circle class="ink" cx="240" cy="100" r="9.56" style="animation: k19 9.0s linear infinite; opacity: 0.0;"/>
+  <text class="say" x="240.0" y="178" text-anchor="middle" style="animation: k20 9.0s linear infinite; opacity: 0.0;">alpha writes a note, and it travels to beta and gamma</text>
+  <text class="say" x="240.0" y="178" text-anchor="middle" style="animation: k21 9.0s linear infinite; opacity: 0.0;">every copy holds the same note, so they are one</text>
+  <text class="say still" x="240.0" y="178" text-anchor="middle" style="opacity: 0">a note written on one machine reaches every machine</text>
+</svg>

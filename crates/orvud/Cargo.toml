@@ -1,0 +1,51 @@
+[package]
+name = "orvud"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "orvud"
+path = "src/main.rs"
+
+[dependencies]
+orvu-sdk = { path = "../orvu-sdk" }
+orvu-crdt = { path = "../orvu-crdt" }
+orvu-runtime = { path = "../orvu-runtime" }
+orvu-transport = { path = "../orvu-transport" }
+orvu-search = { path = "../orvu-search" }
+tonic = "0.14"
+tonic-prost = "0.14"
+prost = "0.14"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "sync", "time"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std"] }
+tokio-util = "0.7"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+getrandom = "0.4"
+libc = "0.2"
+ring = "0.17"
+serde_json = "1"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rcgen = "0.13"
+
+[build-dependencies]
+tonic-prost-build = "0.14"
+
+[dev-dependencies]
+orvu-test-support = { path = "../orvu-test-support" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "test-util"] }
+tempfile = "3"
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower = { version = "0.5", features = ["util"] }
+h2 = "0.4"
+http = "1"
+bytes = "1"

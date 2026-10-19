@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package orvu.v1;
+
+// A hybrid logical clock timestamp: the wall-clock time, plus a counter that
+// puts events from the same clock tick in order. Compare `wall` first, then
+// `logical`.
+message Hlc {
+  uint64 wall = 1;
+  uint32 logical = 2;
+}
+
+// The name of one update. `replica` is the machine that made it and `counter`
+// is that machine's own running number. No two updates share both.
+//
+// A counter is never above 2^62. No machine gets near that by writing, so a
+// message with a higher counter, here or in a version vector, is refused.
+message Dot {
+  uint64 replica = 1;
+  uint64 counter = 2;
+}
+
+// For each machine, how far its updates have been seen with none missing.
+// Like a dot's counter, each number is at most 2^62.
+message VersionVector {
+  map<uint64, uint64> prefix = 1;
+}
+
+// The updates a machine has seen: a version vector, plus the "cloud" of dots
+// that arrived ahead of earlier ones from the same machine.
+message DotContext {
+  VersionVector prefix = 1;
+  repeated Dot cloud = 2;
+}

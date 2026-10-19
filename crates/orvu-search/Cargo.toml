@@ -1,0 +1,15 @@
+[package]
+name = "orvu-search"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.89"
+license.workspace = true
+publish = false
+
+[dependencies]
+model2vec-rs = { version = "0.3", default-features = false, features = ["fancy-regex", "local-only"] }
+ring = "0.17"
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+
+[dev-dependencies]
+tempfile = "3"

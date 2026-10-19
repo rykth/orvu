@@ -1,0 +1,23 @@
+[package]
+name = "orvu-sdk"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+
+[dependencies]
+orvu-core = { path = "../orvu-core" }
+orvu-crdt = { path = "../orvu-crdt" }
+orvu-runtime = { path = "../orvu-runtime" }
+orvu-transport = { path = "../orvu-transport" }
+tokio = { version = "1", features = ["rt", "sync", "macros", "time"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+thiserror = "2"
+
+[dev-dependencies]
+orvu-store = { path = "../orvu-store" }
+tempfile = "3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync", "test-util"] }

@@ -1,0 +1,11 @@
+# The build only needs the sources. Everything built or installed on this
+# computer stays out.
+**/target
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/dist
+**/_bin
+.git
+typescript/release

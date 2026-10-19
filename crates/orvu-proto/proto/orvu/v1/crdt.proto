@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package orvu.v1;
+
+import "orvu/v1/core.proto";
+
+// Which data type a delta is for. A machine that gets a value it does not know
+// answers with a Nack that says so. It never ignores the delta quietly.
+enum CrdtType {
+  CRDT_TYPE_UNSPECIFIED = 0;
+  CRDT_TYPE_PN_COUNTER = 1;
+  CRDT_TYPE_LWW_REGISTER = 2;
+  CRDT_TYPE_OR_SET = 3;
+  CRDT_TYPE_OR_MAP = 4;
+  CRDT_TYPE_OR_MAP_COUNTER = 5;
+  CRDT_TYPE_RGA_LIST = 6;
+  CRDT_TYPE_JSON = 7;
+  CRDT_TYPE_RICH_TEXT = 8;
+  CRDT_TYPE_BOUNDED_COUNTER = 9;
+  CRDT_TYPE_TREE = 10;
+  CRDT_TYPE_MV_MAP = 11;
+}
+
+// Running totals for each machine. The numbers are totals so far, not amounts
+// to add, so applying the same delta twice changes nothing.
+message PnCounterDelta {
+  map<uint64, uint64> inc = 1;
+  map<uint64, uint64> dec = 2;
+}
+
+// One write to a last-writer-wins value. A missing `value` means the write
+// holds no value.
+message LwwRegisterDelta {
+  optional string value = 1;
+  Hlc ts = 2;
+  uint64 writer = 3;
+}
+
+// A set of dots. Where a delta tags several keys or elements with dots (in
+// OrSetDelta, OrMapDelta, OrMapCounterDelta, MvMapDelta and JsonObjectDelta),
+// one dot is listed under one key only. A dot names one write to one key, and
+// a delta that lists it under two is refused.
+message DotSet {
+  repeated Dot dots = 1;
+}
+
+// For each element, the dots that keep it in the set. The context says which
+// dots the sender has seen, and that is what decides removals.
+message OrSetDelta {
+  map<string, DotSet> elements = 1;
+  DotContext ctx = 2;
+}
+
+// For each key, the dots that keep it in the map, and a delta for its value.
+// The context decides which keys were removed. The values are last-writer-wins
+// values, so they use LwwRegisterDelta.
+message OrMapDelta {
+  map<string, DotSet> dots = 1;
+  map<string, LwwRegisterDelta> values = 2;
+  DotContext ctx = 3;
+}
+
+// One value of a multi-value map, with the dot it was written with.
+message MvValue {
+  Dot    dot   = 1;
+  string value = 2;
+}
+
+message MvValues {
+  repeated MvValue values = 1;
+}
+
+// For each key, every value it holds, each with the dot it was written with.
+// More than one means writes made at the same time clashed. The context says
+// which dots the sender has seen, and that decides which values were replaced
+// or removed.
+message MvMapDelta {
+  map<string, MvValues> entries = 1;
+  DotContext            ctx     = 2;
+}
+
+// The same as OrMapDelta, but each value is a counter and uses
+// PnCounterDelta. This is the shape of a shopping cart: item -> quantity.
+message OrMapCounterDelta {
+  map<string, DotSet> dots = 1;
+  map<string, PnCounterDelta> values = 2;
+  DotContext ctx = 3;
+}
+
+// One element of a list: its own dot, the dot of the element it was inserted
+// after, and its value. `has_predecessor = false` means it was inserted at the
+// front of the list.
+//
+// The two must agree: `predecessor` is set exactly when `has_predecessor` is
+// true. An element where they disagree is refused, so that two programs can
+// never read it differently. The same goes for JsonArrayElement. One delta
+// lists each element id once.
+message RgaElement {
+  Dot id = 1;
+  Dot predecessor = 2;
+  bool has_predecessor = 3;
+  string value = 4;
+}
+
+// A change to a list: the elements it touches, the dots it tombstones (hides),
+// and a context. The sender writes `elements` in (replica, counter) order.
+// Tombstones use DotSet.
+message RgaDelta {
+  repeated RgaElement elements = 1;
+  DotSet tombstones = 2;
+  DotContext ctx = 3;
+}
+
+// A change to one node of a JSON document. It has one piece for each part of
+// the node: the tag, the object, the array and the single value.
+//
+// The tag is one last-writer-wins value made of three things: the shape in
+// `tag.value`, plus `generation` and `parent`. They are written together and
+// win or lose together, so `generation` and `parent` are set only when
+// `tag.value` is. When they are left out they are the zero generation (every
+// field zero).
+//
+// `generation` names the node's current contents. Every object field is
+// filed under the generation of the object it was written into, and every
+// array item records that generation in its own `parent`. A node shows only
+// the fields and items of its current `generation`. That is how an
+// overwritten or removed value stays hidden.
+//
+// The shape in `tag.value` is one of:
+//   "S"  a single value, which is in `scalar`
+//   "O"  an object, whose fields are in `object`
+//   "A"  an array, whose items are in `array`
+//   "N"  nothing: the node was removed
+//
+// The single value in `scalar.value` is text. Its first character says what
+// kind of value it is, and the rest is the value:
+//   "z"            null; nothing follows
+//   "b0" or "b1"   false or true
+//   "d" + digits   a number: the 64 bits of the IEEE 754 double, read as an
+//                  unsigned whole number and written in decimal. So 1.5 is
+//                  "d4609434218613702656". Every double, NaN included, comes
+//                  through exactly.
+//   "s" + text     a string; the text follows as it is, with nothing escaped
+// Anything else is an error, as is a shape other than the four above.
+message JsonValueDelta {
+  LwwRegisterDelta tag        = 1;   // the shape: "S", "O", "A" or "N"
+  JsonObjectDelta  object     = 2;
+  JsonArrayDelta   array      = 3;
+  LwwRegisterDelta scalar     = 4;   // the single value, as text (see above)
+  JsonGeneration   generation = 5;   // part of the tag's value
+  JsonGeneration   parent     = 6;   // part of the tag's value
+}
+
+// The name of one generation of a JSON node. A whole write or a removal
+// names it after its own timestamp and machine id, with `step` 0. A write
+// into the node that has to start it afresh, because the node held
+// something else or was removed, names it after the generation it replaces:
+// the same timestamp and machine id, and `step` one higher.
+message JsonGeneration {
+  Hlc    ts     = 1;
+  uint64 writer = 2;
+  uint64 step   = 3;
+}
+
+// The fields of an object. Each field is named by the generation of the
+// object it belongs to and its key, and appears at most once in `dots` and
+// at most once in `values`.
+message JsonObjectDelta {
+  reserved 1, 2;
+  DotContext             ctx    = 3;
+  repeated JsonFieldDots  dots   = 4;
+  repeated JsonFieldValue values = 5;
+}
+message JsonFieldDots {
+  JsonGeneration generation = 1;   // left out for the zero generation
+  string         key        = 2;
+  DotSet         dots       = 3;
+}
+message JsonFieldValue {
+  JsonGeneration generation = 1;   // left out for the zero generation
+  string         key        = 2;
+  JsonValueDelta value      = 3;
+}
+message JsonArrayDelta {
+  repeated JsonArrayElement elements   = 1;
+  DotSet                    tombstones = 2;
+  DotContext                ctx        = 3;
+}
+// Follows the same rules as RgaElement for `predecessor` and
+// `has_predecessor`.
+message JsonArrayElement {
+  Dot            id              = 1;
+  Dot            predecessor     = 2;
+  bool           has_predecessor = 3;
+  JsonValueDelta value           = 4;   // the whole element; it never changes
+}
+
+// A change to formatted text. It has two pieces: the list of characters, as an
+// RgaDelta, and the formatting marks, as an OrMapDelta.
+message RichTextDelta {
+  RgaDelta   text  = 1;
+  OrMapDelta marks = 2;
+}
+
+// One move in a tree. Its id is its (hlc, replica) pair. Every move should
+// have its own id, and any two ids can be compared.
+message TreeMove {
+  Hlc    hlc        = 1;
+  uint64 replica    = 2;
+  string child      = 3;
+  string new_parent = 4;
+}
+
+// A change to a tree: moves, which are only ever added, plus each node's label
+// and its position among its siblings. Labels and positions are
+// last-writer-wins. The sender writes the moves in (hlc, replica) order.
+message TreeDelta {
+  repeated TreeMove moves     = 1;
+  OrMapDelta        labels    = 2;
+  OrMapDelta        positions = 3;
+}
+
+// Allowance handed from one machine to another. `amount` is the total moved so
+// far and only ever grows.
+message Transfer { uint64 from_replica = 1; uint64 to = 2; uint64 amount = 3; }
+
+// A change to a counter that cannot go below zero: each machine's total
+// deposits and withdrawals, plus the transfer totals. The sender writes
+// `transfers` sorted by (from_replica, to).
+message BoundedCounterDelta {
+  map<uint64, uint64> deposits    = 1;
+  map<uint64, uint64> withdrawals = 2;
+  repeated Transfer   transfers   = 3;
+}

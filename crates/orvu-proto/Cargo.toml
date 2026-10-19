@@ -1,0 +1,12 @@
+[package]
+name = "orvu-proto"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+
+[dependencies]
+prost = "0.14"
+
+[build-dependencies]
+prost-build = "0.14"

@@ -1,0 +1,155 @@
+# Orvu on three machines, with agents in Python and TypeScript.
+#
+#     docker compose -f examples/compose/compose.yaml up --build
+#
+# Only the story's output is shown: it says what every agent does. The
+# README beside this file says what you will see and how to clean up.
+
+name: orvu-demo
+
+x-labels: &labels
+  com.orvu.demo: "1"
+
+x-machine-image: &machine-image
+  image: orvu-demo-machine
+  build:
+    context: ../..
+    dockerfile: examples/compose/Dockerfile
+    target: machine
+    labels: *labels
+
+x-python-image: &python-image
+  image: orvu-demo-python
+  build:
+    context: ../..
+    dockerfile: examples/compose/Dockerfile
+    target: python
+    labels: *labels
+
+x-node-image: &node-image
+  image: orvu-demo-node
+  build:
+    context: ../..
+    dockerfile: examples/compose/Dockerfile
+    target: node
+    labels: *labels
+
+# A machine: its sidecar, run from the folder `orvud setup` made for it.
+x-machine: &machine
+  <<: *machine-image
+  labels: *labels
+  init: true
+  attach: false
+  depends_on:
+    setup:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "test", "-S", "/sock/orvud.sock"]
+    interval: 1s
+    retries: 120
+
+# An agent: given only its machine's socket and the keys, never the
+# machine's folder, so it cannot add a key or rules of its own.
+x-agent: &agent
+  labels: *labels
+  init: true
+  attach: false
+
+services:
+  setup:
+    <<: *machine-image
+    labels: *labels
+    user: root
+    init: true
+    attach: false
+    command: ["setup.sh"]
+    volumes:
+      - team:/team
+      - keys:/keys
+      - ctl:/ctl
+      - m1-sock:/sock/m1
+      - m2-sock:/sock/m2
+      - m3-sock:/sock/m3
+    healthcheck:
+      test: ["CMD", "test", "-e", "/team/ready"]
+      interval: 1s
+      retries: 120
+
+  m1:
+    <<: *machine
+    command: ["machine.sh", "m1"]
+    volumes: [team:/team, ctl:/ctl, m1-sock:/sock]
+  m2:
+    <<: *machine
+    command: ["machine.sh", "m2"]
+    volumes: [team:/team, ctl:/ctl, m2-sock:/sock]
+  m3:
+    <<: *machine
+    command: ["machine.sh", "m3"]
+    volumes: [team:/team, ctl:/ctl, m3-sock:/sock]
+
+  alice:
+    <<: [*agent, *python-image]
+    command: ["python", "agent.py"]
+    environment: {AGENT: alice, MACHINE: m1}
+    volumes: [m1-sock:/sock, keys:/keys:ro]
+    depends_on: {m1: {condition: service_healthy}}
+  bob:
+    <<: [*agent, *node-image]
+    command: ["node", "agent.ts"]
+    environment: {AGENT: bob, MACHINE: m2}
+    volumes: [m2-sock:/sock, keys:/keys:ro]
+    depends_on: {m2: {condition: service_healthy}}
+  carol:
+    <<: [*agent, *node-image]
+    command: ["node", "agent.ts"]
+    environment: {AGENT: carol, MACHINE: m3}
+    volumes: [m3-sock:/sock, keys:/keys:ro]
+    depends_on: {m3: {condition: service_healthy}}
+  dave:
+    <<: [*agent, *python-image]
+    command: ["python", "agent.py"]
+    environment: {AGENT: dave, MACHINE: m2}
+    volumes: [m2-sock:/sock, keys:/keys:ro]
+    depends_on: {m2: {condition: service_healthy}}
+
+  # The MCP server over HTTP, as the agent scout, on m1.
+  scout:
+    <<: [*agent, *python-image]
+    command: ["sh", "scout.sh"]
+    volumes: [m1-sock:/sock, keys:/keys:ro]
+    depends_on: {m1: {condition: service_healthy}}
+
+  # Tells the agents what to do, and checks what comes of it. It reads each
+  # machine's copy of the team as the agent referee, switches m3 off and on
+  # through the shared folder /ctl, and reads m2's audit log.
+  story:
+    <<: *python-image
+    labels: *labels
+    init: true
+    command: ["python", "story.py"]
+    volumes:
+      - m1-sock:/sock/m1
+      - m2-sock:/sock/m2
+      - m3-sock:/sock/m3
+      - keys:/keys:ro
+      - team:/team:ro
+      - ctl:/ctl
+    depends_on:
+      alice: {condition: service_started}
+      bob: {condition: service_started}
+      carol: {condition: service_started}
+      dave: {condition: service_started}
+      scout: {condition: service_started}
+
+volumes:
+  team: {labels: *labels}
+  keys: {labels: *labels}
+  ctl: {labels: *labels}
+  m1-sock: {labels: *labels}
+  m2-sock: {labels: *labels}
+  m3-sock: {labels: *labels}
+
+networks:
+  default:
+    labels: *labels

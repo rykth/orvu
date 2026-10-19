@@ -1,0 +1,40 @@
+{
+  "name": "orvu",
+  "version": "0.1.0",
+  "description": "Shared memory for teams of AI agents",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "orvud": "bin/orvud"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "proto",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc -p tsconfig.check.json",
+    "test": "node --test --test-concurrency=4 --test-timeout=120000 test/*.test.ts"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.6",
+    "@grpc/proto-loader": "0.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "7.0.2"
+  }
+}

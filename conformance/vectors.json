@@ -1,0 +1,1589 @@
+{
+  "vectors": [
+    {
+      "expect": {
+        "value": 8
+      },
+      "kind": "converge",
+      "name": "counter_concurrent_inc",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "by": 5,
+              "kind": "increment",
+              "now_wall": 1
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "by": 3,
+              "kind": "increment",
+              "now_wall": 1
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "counter"
+    },
+    {
+      "expect": {
+        "value": "b"
+      },
+      "kind": "converge",
+      "name": "register_lww_higher_wall_wins",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "value": "a"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 2,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "register"
+    },
+    {
+      "expect": {
+        "elements": [
+          "x",
+          "y"
+        ]
+      },
+      "kind": "converge",
+      "name": "set_concurrent_add",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "add",
+              "now_wall": 1,
+              "value": "x"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "add",
+              "now_wall": 1,
+              "value": "y"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "set"
+    },
+    {
+      "expect": {
+        "elements": [
+          "y"
+        ]
+      },
+      "kind": "converge",
+      "name": "set_add_then_remove_same_replica",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "add",
+              "now_wall": 1,
+              "value": "x"
+            },
+            {
+              "kind": "add",
+              "now_wall": 2,
+              "value": "y"
+            },
+            {
+              "kind": "remove",
+              "now_wall": 3,
+              "value": "x"
+            }
+          ],
+          "replica": 1
+        }
+      ],
+      "type": "set"
+    },
+    {
+      "expect": {
+        "entries": {
+          "k": "b"
+        }
+      },
+      "kind": "converge",
+      "name": "map_lww_higher_wall_wins",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "a"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 2,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "map"
+    },
+    {
+      "expect": {
+        "items": {
+          "apple": 3,
+          "pear": 1
+        }
+      },
+      "kind": "converge",
+      "name": "cart_concurrent_inc_dec",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "by": 5,
+              "item": "apple",
+              "kind": "add",
+              "now_wall": 1
+            },
+            {
+              "by": 1,
+              "item": "pear",
+              "kind": "add",
+              "now_wall": 2
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "by": -2,
+              "item": "apple",
+              "kind": "add",
+              "now_wall": 1
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "cart"
+    },
+    {
+      "kind": "encode",
+      "name": "counter_inc_then_dec_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "by": 5,
+          "kind": "increment",
+          "now_wall": 1
+        },
+        {
+          "by": -2,
+          "kind": "increment",
+          "now_wall": 2
+        }
+      ],
+      "replica": 1,
+      "type": "counter",
+      "wire_hex": [
+        "0a036f626a10011a0408011001220208012a020a0032060a0408011005",
+        "0a036f626a10011a0408011002220208022a080a060a04080110013206120408011002"
+      ]
+    },
+    {
+      "kind": "encode",
+      "name": "register_set_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "kind": "set",
+          "now_wall": 1,
+          "value": "hi"
+        }
+      ],
+      "replica": 1,
+      "type": "register",
+      "wire_hex": [
+        "0a036f626a10021a0408011001220208012a020a00320a0a026869120208011801"
+      ]
+    },
+    {
+      "kind": "encode",
+      "name": "set_add_then_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "kind": "add",
+          "now_wall": 1,
+          "value": "x"
+        },
+        {
+          "kind": "remove",
+          "now_wall": 2,
+          "value": "x"
+        }
+      ],
+      "replica": 1,
+      "type": "set",
+      "wire_hex": [
+        "0a036f626a10031a0408011001220208012a020a0032170a0b0a017812060a040801100112080a060a0408011001",
+        "0a036f626a10031a0408011002220208022a080a060a0408011001320a12080a060a0408011001"
+      ]
+    },
+    {
+      "kind": "encode",
+      "name": "map_put_then_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "key": "name",
+          "kind": "put",
+          "now_wall": 1,
+          "value": "alice"
+        },
+        {
+          "key": "name",
+          "kind": "remove",
+          "now_wall": 2
+        }
+      ],
+      "replica": 1,
+      "type": "map",
+      "wire_hex": [
+        "0a036f626a10041a0408011001220208012a020a0032310a0e0a046e616d6512060a040801100112150a046e616d65120d0a05616c6963651202080118011a080a060a0408011001",
+        "0a036f626a10041a0408011002220208022a080a060a0408011001320a1a080a060a0408011001"
+      ]
+    },
+    {
+      "kind": "encode",
+      "name": "cart_add_dec_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "by": 5,
+          "item": "apple",
+          "kind": "add",
+          "now_wall": 1
+        },
+        {
+          "by": -2,
+          "item": "apple",
+          "kind": "add",
+          "now_wall": 2
+        },
+        {
+          "item": "apple",
+          "kind": "remove_item",
+          "now_wall": 3
+        }
+      ],
+      "replica": 1,
+      "type": "cart",
+      "wire_hex": [
+        "0a036f626a10051a0408011001220208012a020a00322c0a0f0a056170706c6512060a0408011001120f0a056170706c6512060a04080110051a080a060a0408011001",
+        "0a036f626a10051a0408011002220208022a080a060a0408011001322c0a0f0a056170706c6512060a0408011002120f0a056170706c6512061204080110021a080a060a0408011002",
+        "0a036f626a10051a0408011003220208032a080a060a0408011002320a1a080a00120408011002"
+      ]
+    },
+    {
+      "expect": {
+        "children": {
+          "b": [
+            "a"
+          ],
+          "root": [
+            "b"
+          ]
+        },
+        "nodes": [
+          {
+            "id": "a",
+            "label": null,
+            "parent": "b",
+            "position": null
+          },
+          {
+            "id": "b",
+            "label": null,
+            "parent": "root",
+            "position": null
+          },
+          {
+            "id": "root",
+            "label": null,
+            "parent": null,
+            "position": null
+          }
+        ]
+      },
+      "kind": "converge",
+      "name": "tree_concurrent_swap_is_cycle_free",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "child": "a",
+              "kind": "move_node",
+              "new_parent": "root",
+              "now_wall": 1
+            },
+            {
+              "child": "b",
+              "kind": "move_node",
+              "new_parent": "root",
+              "now_wall": 2
+            },
+            {
+              "child": "a",
+              "kind": "move_node",
+              "new_parent": "b",
+              "now_wall": 5
+            },
+            {
+              "child": "a",
+              "kind": "move_node",
+              "new_parent": "a",
+              "now_wall": 6
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "child": "b",
+              "kind": "move_node",
+              "new_parent": "a",
+              "now_wall": 5
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "tree"
+    },
+    {
+      "expect": {
+        "children": {
+          "root": [
+            "x"
+          ]
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": null,
+            "parent": null,
+            "position": null
+          },
+          {
+            "id": "x",
+            "label": "Beta",
+            "parent": "root",
+            "position": null
+          }
+        ]
+      },
+      "kind": "converge",
+      "name": "tree_label_lww_tie_break",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "child": "x",
+              "kind": "move_node",
+              "new_parent": "root",
+              "now_wall": 1
+            },
+            {
+              "kind": "set_label",
+              "name": "Alpha",
+              "node": "x",
+              "now_wall": 5
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set_label",
+              "name": "Beta",
+              "node": "x",
+              "now_wall": 5
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "tree"
+    },
+    {
+      "expect": {
+        "children": {
+          "root": [
+            "c",
+            "a",
+            "b"
+          ]
+        },
+        "nodes": [
+          {
+            "id": "a",
+            "label": "Alpha",
+            "parent": "root",
+            "position": "V"
+          },
+          {
+            "id": "b",
+            "label": null,
+            "parent": "root",
+            "position": "k"
+          },
+          {
+            "id": "c",
+            "label": null,
+            "parent": "root",
+            "position": "F"
+          },
+          {
+            "id": "root",
+            "label": null,
+            "parent": null,
+            "position": null
+          }
+        ]
+      },
+      "kind": "converge",
+      "name": "tree_ordered_children_across_replicas",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "child": "a",
+              "index": 0,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 1
+            },
+            {
+              "child": "b",
+              "index": 1,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 2
+            },
+            {
+              "child": "c",
+              "index": 0,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 3
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set_label",
+              "name": "Alpha",
+              "node": "a",
+              "now_wall": 4
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "tree"
+    },
+    {
+      "expect": {
+        "children": {
+          "root": [
+            "a",
+            "x",
+            "y",
+            "b"
+          ]
+        },
+        "nodes": [
+          {
+            "id": "a",
+            "label": null,
+            "parent": "root",
+            "position": "V"
+          },
+          {
+            "id": "b",
+            "label": null,
+            "parent": "root",
+            "position": "k"
+          },
+          {
+            "id": "root",
+            "label": null,
+            "parent": null,
+            "position": null
+          },
+          {
+            "id": "x",
+            "label": null,
+            "parent": "root",
+            "position": "c"
+          },
+          {
+            "id": "y",
+            "label": null,
+            "parent": "root",
+            "position": "c"
+          }
+        ]
+      },
+      "kind": "converge",
+      "name": "tree_concurrent_placement_into_one_gap",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "child": "a",
+              "index": 0,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 1
+            },
+            {
+              "child": "b",
+              "index": 1,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 2
+            },
+            {
+              "child": "x",
+              "index": 1,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 3
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "child": "a",
+              "index": 0,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 1
+            },
+            {
+              "child": "b",
+              "index": 1,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 2
+            },
+            {
+              "child": "y",
+              "index": 1,
+              "kind": "move_node_at",
+              "new_parent": "root",
+              "now_wall": 3
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "tree"
+    },
+    {
+      "kind": "encode",
+      "name": "tree_moves_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "child": "a",
+          "kind": "move_node",
+          "new_parent": "root",
+          "now_wall": 1
+        },
+        {
+          "child": "b",
+          "kind": "move_node",
+          "new_parent": "a",
+          "now_wall": 2
+        }
+      ],
+      "replica": 1,
+      "type": "tree",
+      "wire_hex": [
+        "0a036f626a100a1a0408011001220208012a020a0032110a0f0a02080110011a01612204726f6f74",
+        "0a036f626a100a1a0408011002220208022a080a060a0408011001320e0a0c0a02080210011a0162220161"
+      ]
+    },
+    {
+      "kind": "encode",
+      "name": "tree_place_and_label_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "child": "a",
+          "index": 0,
+          "kind": "move_node_at",
+          "new_parent": "root",
+          "now_wall": 1
+        },
+        {
+          "kind": "set_label",
+          "name": "Alpha",
+          "node": "a",
+          "now_wall": 2
+        }
+      ],
+      "replica": 1,
+      "type": "tree",
+      "wire_hex": [
+        "0a036f626a100a1a0408011001220208012a020a00323a0a0f0a02080110011a01612204726f6f741a270a0b0a016112060a0408011001120e0a016112090a01561202080118011a080a060a0408011001",
+        "0a036f626a100a1a0408011002220208022a080a060a0408011001322d122b0a0b0a016112060a040801100112120a0161120d0a05416c7068611202080218011a080a060a0408011001"
+      ]
+    },
+    {
+      "expect": {
+        "list": [
+          "b",
+          "a"
+        ]
+      },
+      "kind": "converge",
+      "name": "list_concurrent_inserts_at_head_order_deterministically",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 1,
+              "value": "a"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 1,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "list"
+    },
+    {
+      "expect": {
+        "list": [
+          "a",
+          "c"
+        ]
+      },
+      "kind": "converge",
+      "name": "list_delete_keeps_the_survivors_anchored",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 1,
+              "value": "a"
+            },
+            {
+              "index": 1,
+              "kind": "insert",
+              "now_wall": 2,
+              "value": "b"
+            },
+            {
+              "index": 2,
+              "kind": "insert",
+              "now_wall": 3,
+              "value": "c"
+            },
+            {
+              "index": 1,
+              "kind": "remove",
+              "now_wall": 4
+            }
+          ],
+          "replica": 1
+        }
+      ],
+      "type": "list"
+    },
+    {
+      "expect": {
+        "list": [
+          "b",
+          "z",
+          "a"
+        ]
+      },
+      "kind": "converge",
+      "name": "list_sibling_tie_break_orders_by_counter_then_replica",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 1,
+              "value": "a"
+            },
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 2,
+              "value": "b"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "index": 0,
+              "kind": "insert",
+              "now_wall": 1,
+              "value": "z"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "list"
+    },
+    {
+      "kind": "encode",
+      "name": "list_insert_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "index": 0,
+          "kind": "insert",
+          "now_wall": 1,
+          "value": "a"
+        },
+        {
+          "index": 1,
+          "kind": "insert",
+          "now_wall": 2,
+          "value": "b"
+        },
+        {
+          "index": 0,
+          "kind": "remove",
+          "now_wall": 3
+        }
+      ],
+      "replica": 1,
+      "type": "list",
+      "wire_hex": [
+        "0a036f626a10061a0408011001220208012a020a0032110a090a040801100122016112001a020a00",
+        "0a036f626a10061a0408011002220208022a080a060a040801100132190a110a0408011002120408011001180122016212001a020a00",
+        "0a036f626a10061a0408011003220208032a080a060a0408011002320c12060a04080110011a020a00"
+      ]
+    },
+    {
+      "expect": {
+        "value": {
+          "a": "x",
+          "b": "y"
+        }
+      },
+      "kind": "converge",
+      "name": "json_concurrent_sets_at_different_paths_both_survive",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"a\"]",
+              "value": "\"x\""
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"b\"]",
+              "value": "\"y\""
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "expect": {
+        "value": {
+          "k": "alpha"
+        }
+      },
+      "kind": "converge",
+      "name": "json_concurrent_sets_at_one_path_resolve_lww",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 5,
+              "path": "[\"k\"]",
+              "value": "\"beta\""
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 5,
+              "path": "[\"k\"]",
+              "value": "\"alpha\""
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "expect": {
+        "value": {
+          "xs": [
+            3,
+            4
+          ]
+        }
+      },
+      "kind": "converge",
+      "name": "json_concurrent_whole_lists_keep_the_later_one",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"xs\"]",
+              "value": "[1,2]"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 2,
+              "path": "[\"xs\"]",
+              "value": "[3,4]"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "expect": {
+        "value": {
+          "o": {
+            "old": 1
+          }
+        }
+      },
+      "kind": "converge",
+      "name": "json_a_whole_write_beats_a_write_inside_it",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"o\"]",
+              "value": "{\"old\":1}"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 3,
+              "path": "[\"o\",\"b\"]",
+              "value": "2"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "expect": {
+        "value": {}
+      },
+      "kind": "converge",
+      "name": "json_a_removal_beats_a_write_inside_it",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"o\"]",
+              "value": "{\"old\":1}"
+            },
+            {
+              "kind": "remove",
+              "now_wall": 2,
+              "path": "[\"o\"]"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 3,
+              "path": "[\"o\",\"b\"]",
+              "value": "2"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "expect": {
+        "value": {
+          "o": {
+            "a": 1,
+            "b": 2
+          }
+        }
+      },
+      "kind": "converge",
+      "name": "json_writes_into_an_empty_field_all_show",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 1,
+              "path": "[\"o\",\"a\"]",
+              "value": "1"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "set",
+              "now_wall": 2,
+              "path": "[\"o\",\"b\"]",
+              "value": "2"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "json"
+    },
+    {
+      "kind": "encode",
+      "name": "json_set_and_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "kind": "set",
+          "now_wall": 1,
+          "path": "[\"a\"]",
+          "value": "\"x\""
+        },
+        {
+          "kind": "set",
+          "now_wall": 2,
+          "path": "[\"b\"]",
+          "value": "\"y\""
+        },
+        {
+          "kind": "remove",
+          "now_wall": 3,
+          "path": "[\"a\"]"
+        }
+      ],
+      "replica": 1,
+      "type": "json",
+      "wire_hex": [
+        "0a036f626a10071a0408011001220208012a020a00325e0a050a014f1200124f1a080a060a040801100122110a040a0018011201611a060a04080110012a300a040a0018011201611a250a090a0153120208011801220a0a0273781202080118012a060a020801100132040a0018012a040a001801",
+        "0a036f626a10071a0408011002220208022a080a060a04080110013251124f1a080a0012040801100222110a040a0018011201621a060a04080110022a300a040a0018011201621a250a090a0153120208021801220a0a0273791202080218012a060a020802100132040a001801",
+        "0a036f626a10071a0408011003220208032a080a060a0408011002323212301a080a060a04080110012a240a040a0018011201611a190a090a014e1202080318012a060a020803100132040a001801"
+      ]
+    },
+    {
+      "expect": {
+        "spans": [
+          {
+            "marks": {
+              "bold": "1"
+            },
+            "text": "ab"
+          },
+          {
+            "marks": {},
+            "text": "c"
+          }
+        ],
+        "text": "abc"
+      },
+      "kind": "converge",
+      "name": "richtext_format_produces_marked_spans",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "ch": "a",
+              "index": 0,
+              "kind": "insert_char",
+              "now_wall": 1
+            },
+            {
+              "ch": "b",
+              "index": 1,
+              "kind": "insert_char",
+              "now_wall": 2
+            },
+            {
+              "ch": "c",
+              "index": 2,
+              "kind": "insert_char",
+              "now_wall": 3
+            },
+            {
+              "attr": "bold",
+              "index": 0,
+              "kind": "format",
+              "len": 2,
+              "now_wall": 4,
+              "value": "1"
+            }
+          ],
+          "replica": 1
+        }
+      ],
+      "type": "richtext"
+    },
+    {
+      "expect": {
+        "spans": [
+          {
+            "marks": {},
+            "text": "ba"
+          }
+        ],
+        "text": "ba"
+      },
+      "kind": "converge",
+      "name": "richtext_concurrent_inserts_order_deterministically",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "ch": "a",
+              "index": 0,
+              "kind": "insert_char",
+              "now_wall": 1
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "ch": "b",
+              "index": 0,
+              "kind": "insert_char",
+              "now_wall": 1
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "richtext"
+    },
+    {
+      "expect": {
+        "spans": [
+          {
+            "marks": {},
+            "text": "a"
+          },
+          {
+            "marks": {
+              "bold": "1"
+            },
+            "text": "b"
+          }
+        ],
+        "text": "ab"
+      },
+      "kind": "converge",
+      "name": "richtext_unformat_clears_the_mark_via_the_empty_sentinel",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "ch": "a",
+              "index": 0,
+              "kind": "insert_char",
+              "now_wall": 1
+            },
+            {
+              "ch": "b",
+              "index": 1,
+              "kind": "insert_char",
+              "now_wall": 2
+            },
+            {
+              "attr": "bold",
+              "index": 0,
+              "kind": "format",
+              "len": 2,
+              "now_wall": 3,
+              "value": "1"
+            },
+            {
+              "attr": "bold",
+              "index": 0,
+              "kind": "unformat",
+              "len": 1,
+              "now_wall": 4
+            }
+          ],
+          "replica": 1
+        }
+      ],
+      "type": "richtext"
+    },
+    {
+      "kind": "encode",
+      "name": "richtext_insert_and_format_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "ch": "a",
+          "index": 0,
+          "kind": "insert_char",
+          "now_wall": 1
+        },
+        {
+          "ch": "b",
+          "index": 1,
+          "kind": "insert_char",
+          "now_wall": 2
+        },
+        {
+          "attr": "bold",
+          "index": 0,
+          "kind": "format",
+          "len": 1,
+          "now_wall": 3,
+          "value": "1"
+        }
+      ],
+      "replica": 1,
+      "type": "richtext",
+      "wire_hex": [
+        "0a036f626a10081a0408011001220208012a020a0032130a110a090a040801100122016112001a020a00",
+        "0a036f626a10081a0408011002220208022a080a060a0408011001321b0a190a110a0408011002120408011001180122016212001a020a00",
+        "0a036f626a10081a0408011003220208032a080a060a0408011002323712350a120a08312e317c626f6c6412060a040801100112150a08312e317c626f6c6412090a01311202080318011a080a060a0408011001"
+      ]
+    },
+    {
+      "expect": {
+        "value": 10
+      },
+      "kind": "converge",
+      "name": "bounded_concurrent_spending_converges",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "increment",
+              "n": 10,
+              "now_wall": 1
+            },
+            {
+              "kind": "try_decrement",
+              "n": 4,
+              "now_wall": 2
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "kind": "increment",
+              "n": 6,
+              "now_wall": 1
+            },
+            {
+              "kind": "try_decrement",
+              "n": 2,
+              "now_wall": 2
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "bounded"
+    },
+    {
+      "expect": {
+        "value": 7
+      },
+      "kind": "converge",
+      "name": "bounded_transfer_moves_allowance_without_changing_value",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "kind": "increment",
+              "n": 10,
+              "now_wall": 1
+            },
+            {
+              "kind": "transfer",
+              "n": 4,
+              "now_wall": 2,
+              "to": 2
+            },
+            {
+              "kind": "try_decrement",
+              "n": 3,
+              "now_wall": 3
+            }
+          ],
+          "replica": 1
+        }
+      ],
+      "type": "bounded"
+    },
+    {
+      "kind": "encode",
+      "name": "bounded_increment_decrement_transfer_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "kind": "increment",
+          "n": 10,
+          "now_wall": 1
+        },
+        {
+          "kind": "try_decrement",
+          "n": 3,
+          "now_wall": 2
+        },
+        {
+          "kind": "transfer",
+          "n": 4,
+          "now_wall": 3,
+          "to": 2
+        }
+      ],
+      "replica": 1,
+      "type": "bounded",
+      "wire_hex": [
+        "0a036f626a10091a0408011001220208012a020a0032060a040801100a",
+        "0a036f626a10091a0408011002220208022a080a060a04080110013206120408011003",
+        "0a036f626a10091a0408011003220208032a080a060a040801100232081a06080110021804"
+      ]
+    },
+    {
+      "expect": {
+        "entries": {
+          "k": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "kind": "converge",
+      "name": "mvmap_writes_at_once_are_both_kept",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "a"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "mvmap"
+    },
+    {
+      "expect": {
+        "entries": {
+          "k": [
+            "c",
+            "b"
+          ]
+        }
+      },
+      "kind": "converge",
+      "name": "mvmap_a_write_replaces_only_what_it_saw",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "a"
+            },
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 2,
+              "value": "c"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 5,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "mvmap"
+    },
+    {
+      "expect": {
+        "entries": {
+          "k": [
+            "b"
+          ]
+        }
+      },
+      "kind": "converge",
+      "name": "mvmap_a_remove_keeps_a_write_it_did_not_see",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "a"
+            },
+            {
+              "key": "j",
+              "kind": "put",
+              "now_wall": 2,
+              "value": "x"
+            },
+            {
+              "key": "k",
+              "kind": "remove",
+              "now_wall": 3
+            },
+            {
+              "key": "j",
+              "kind": "remove",
+              "now_wall": 4
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "b"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "mvmap"
+    },
+    {
+      "expect": {
+        "entries": {
+          "k": [
+            "same"
+          ]
+        }
+      },
+      "kind": "converge",
+      "name": "mvmap_the_same_value_twice_reads_once",
+      "object": "obj",
+      "replicas": [
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "same"
+            }
+          ],
+          "replica": 1
+        },
+        {
+          "ops": [
+            {
+              "key": "k",
+              "kind": "put",
+              "now_wall": 1,
+              "value": "same"
+            }
+          ],
+          "replica": 2
+        }
+      ],
+      "type": "mvmap"
+    },
+    {
+      "kind": "encode",
+      "name": "mvmap_put_put_remove_r1",
+      "object": "obj",
+      "ops": [
+        {
+          "key": "k",
+          "kind": "put",
+          "now_wall": 1,
+          "value": "a"
+        },
+        {
+          "key": "k",
+          "kind": "put",
+          "now_wall": 2,
+          "value": "b"
+        },
+        {
+          "key": "k",
+          "kind": "remove",
+          "now_wall": 3
+        }
+      ],
+      "replica": 1,
+      "type": "mvmap",
+      "wire_hex": [
+        "0a036f626a100b1a0408011001220208012a020a00321c0a100a016b120b0a090a040801100112016112080a060a0408011001",
+        "0a036f626a100b1a0408011002220208022a080a060a0408011001321c0a100a016b120b0a090a040801100212016212080a060a0408011002",
+        "0a036f626a100b1a0408011003220208032a080a060a0408011002320a12080a00120408011002"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+[package]
+name = "orvu-test-support"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+publish = false
+
+[dependencies]
+libc = "0.2"
+tokio = { version = "1", features = ["time"] }

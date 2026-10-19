@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "orvu"
+dynamic = ["version"]
+description = "Shared memory for teams of AI agents: the Python client."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "grpcio>=1.84.0",
+    "protobuf>=7.35.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "grpcio-tools>=1.84.0",
+    # Only the tests use this: they check the MCP server against a client
+    # that was not written here.
+    "mcp>=1.26",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+# `orvu mcp --http`: MCP over HTTP, through the MCP library's own transport.
+http = [
+    "mcp>=2.3,<3",
+    "uvicorn>=0.31",
+]
+
+# The tools `scripts/build-wheel.sh` uses to build the sidecar and the package.
+release = [
+    "build>=1.2",
+    "cargo-zigbuild>=0.19",
+    "ziglang>=0.13",
+]
+
+[project.scripts]
+orvu = "orvu._cli:main"
+orvud = "orvu._sidecar:main"
+
+[tool.hatch.version]
+path = "src/orvu/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/orvu"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+
+[tool.ruff]
+# The gRPC code made from the .proto files is generated, not written here.
+extend-exclude = ["src/orvu/_proto"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

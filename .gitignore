@@ -1,0 +1,8 @@
+/target
+__pycache__/
+.venv/
+.pytest_cache/
+_bin/
+dist/
+node_modules/
+/typescript/release/

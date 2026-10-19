@@ -1,0 +1,15 @@
+[package]
+name = "orvu-store"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license.workspace = true
+
+[dependencies]
+orvu-core = { path = "../orvu-core" }
+orvu-crdt = { path = "../orvu-crdt" }
+redb = "2"
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
