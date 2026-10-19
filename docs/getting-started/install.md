@@ -11,17 +11,11 @@
 
 ## Python
 
-The package is not on PyPI yet. Until it is, build it from this repository,
-with the sidecar inside. That needs Rust and `protoc`
-(see [the Python package's README](../../python/README.md#building-the-package-people-install)):
+On Linux, on Intel/AMD or ARM:
 
 ```text
-cd python
-sh scripts/build-wheel.sh
-pip install dist/orvu-*.whl
+pip install orvu
 ```
-
-Once it is published, `pip install orvu` will do the same.
 
 That is the whole setup. The package brings:
 
@@ -34,17 +28,28 @@ The first `Team.connect()` or `orvu.connect()` starts the sidecar in the
 background. Every program you run after that shares it. It stops by itself
 five minutes after the last program has gone.
 
-To serve the MCP tools over HTTP as well, install the extra too:
+To serve the MCP tools over HTTP as well, install the extra:
 
 ```text
-pip install "$(ls dist/orvu-*.whl)[http]"
+pip install 'orvu[http]'
 ```
 
-(once published, `pip install 'orvu[http]'`).
+### On a Mac or on Windows
 
-On Windows, the package has no sidecar inside (`sh scripts/build-wheel.sh
---without-sidecar` builds it).
-It connects to a sidecar elsewhere with a connection file.
+PyPI has the package for Linux only for now. On a Mac, build it from this
+repository, with the sidecar inside. That needs Rust and `protoc` (see [the
+Python package's
+README](../../python/README.md#building-the-package-people-install)):
+
+```text
+cd python
+sh scripts/build-wheel.sh
+pip install dist/orvu-*.whl
+```
+
+On Windows, the package has no sidecar inside: `sh scripts/build-wheel.sh
+--without-sidecar` builds it, on any machine. It connects to a sidecar
+elsewhere with a connection file.
 
 ## TypeScript
 

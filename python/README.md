@@ -668,6 +668,9 @@ with orvu.connect() as client:
   the command to run once by hand, with the folder in it:
   `orvud --local --data-dir <folder> --moved` if the folder was moved here,
   or `--new-number` if the other computer still uses its copy.
+- **PyPI has the package for Linux only, for now,** on Intel/AMD and ARM. On
+  a Mac, build it from this repository (see "Building the package people
+  install" below).
 - **The sidecar runs on Linux and macOS.** There is no sidecar for Windows
   yet. An agent on Windows installs the package with no sidecar inside and
   connects to one elsewhere over the network. It has been tried only on

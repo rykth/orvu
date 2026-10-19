@@ -36,7 +36,7 @@ Use HTTP when the agent's program cannot start the server itself: it runs on
 another machine, in a container, or as another user.
 
 ```text
-pip install "$(ls dist/orvu-*.whl)[http]"   # once published: pip install 'orvu[http]'
+pip install 'orvu[http]'
 head -c 32 /dev/urandom | base64 > ~/.orvu-token
 chmod 600 ~/.orvu-token
 orvu mcp --me researcher-1 --http 127.0.0.1:8765 --token-file ~/.orvu-token

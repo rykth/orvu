@@ -19,14 +19,14 @@ someone settles it.
 
 ### Python
 
-You need Python 3.10 or newer, on Linux or a Mac.
-
-The package is not on PyPI yet; build it from this repository first
-([how](docs/getting-started/install.md)). Once published:
+You need Python 3.10 or newer. On Linux:
 
 ```text
 pip install orvu
 ```
+
+On a Mac, build the package from this repository for now
+([how](docs/getting-started/install.md#on-a-mac-or-on-windows)).
 
 ```python
 from orvu import Team
