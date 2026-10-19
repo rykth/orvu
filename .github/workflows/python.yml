@@ -1,6 +1,6 @@
-# Builds the Python package for each kind of machine it supports, with the
-# sidecar inside, and tests it there. Also builds the package with no sidecar
-# inside, for Windows, which connects to a sidecar elsewhere over the network.
+# Builds the Python package for Linux, on Intel/AMD and on ARM, with the
+# sidecar inside, and tests it there. Packages for the Mac and for Windows are
+# left out for now.
 name: python
 
 on:
@@ -21,8 +21,6 @@ jobs:
             old_linux: quay.io/pypa/manylinux2014_x86_64
           - os: ubuntu-24.04-arm
             old_linux: quay.io/pypa/manylinux2014_aarch64
-          - os: macos-15
-          - os: macos-15-intel
     steps:
       - uses: actions/checkout@v4
 
@@ -76,79 +74,12 @@ jobs:
           path: python/dist/*.whl
           if-no-files-found: error
 
-  # The package with no sidecar inside, for Windows. It is tested here
-  # against a sidecar over the network, and then installed on Windows.
-  package-without-sidecar:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: arduino/setup-protoc@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Build the sidecar it connects to
-        run: cargo build -p orvud
-
-      - name: Build the package with no sidecar inside
-        working-directory: python
-        run: |
-          python -m pip install build
-          sh scripts/build-wheel.sh --without-sidecar
-
-      - name: Install it into an empty environment and connect over the network
-        run: sh python/scripts/clean-test-network.sh python/dist/orvu-*-py3-none-win*.whl
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheel-windows
-          path: python/dist/*.whl
-          if-no-files-found: error
-
-  # The package for Windows, installed on Windows. There is no sidecar there
-  # to connect to, so this checks that it installs, that it loads, and that
-  # asking it for a sidecar of its own says to connect over the network.
-  windows:
-    needs: package-without-sidecar
-    runs-on: windows-latest
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: wheel-windows
-          path: dist
-
-      - name: Install it, load it, and ask it for a sidecar
-        shell: bash
-        run: |
-          python -m pip install dist/*.whl
-          python -c "
-          import orvu
-          try:
-              orvu.connect()
-          except orvu.SidecarUnavailable as error:
-              assert 'ORVU_CONNECT' in str(error), error
-          else:
-              raise SystemExit('a sidecar was found where there is none')
-          "
-          if orvud --version > orvud.out 2>&1; then cat orvud.out; exit 1; fi
-          grep -q ORVU_CONNECT orvud.out
-
   # Runs only for a version tag, such as v0.1.0, and only after every package
   # above was built and tested. It sends the packages to PyPI, which has to be
   # told once to trust this workflow: see python/README.md.
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [package, package-without-sidecar, windows]
+    needs: [package]
     runs-on: ubuntu-24.04
     environment: pypi
     permissions:
