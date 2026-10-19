@@ -2,7 +2,7 @@
  * Orvu's TypeScript client. It talks to an `orvud` sidecar.
  *
  * ```ts
- * import { Team } from "orvu";
+ * import { Team } from "@orvuhq/orvu";
  *
  * const team = await Team.connect("default", { me: "researcher-2" });
  * await team.notes.put("deploy-date", "Friday");

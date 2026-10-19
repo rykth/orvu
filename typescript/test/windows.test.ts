@@ -10,7 +10,7 @@ import { test } from "node:test";
 import { freePort, REPO, Sidecar, shortFolder, withHome } from "./support.ts";
 
 /** Runs `program` in a Node that says it is on Windows, and gives what it
- * printed. `orvu` there is this repository's copy. */
+ * printed. `orvu` there is this repository's copy of the library. */
 function likeWindows(program: string): string {
   const preamble = `Object.defineProperty(process, "platform", { value: "win32" });
 const orvu = await import(${JSON.stringify(path.join(REPO, "typescript/src/index.ts"))});

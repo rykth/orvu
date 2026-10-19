@@ -3,17 +3,17 @@
 #
 #     sh typescript/scripts/build-package.sh
 #
-# There are two kinds of package. `orvu` is the library, the same on every
+# There are two kinds of package. `@orvuhq/orvu` is the library, the same on every
 # machine, with no sidecar inside. The sidecar program comes in a package of
 # its own for each kind of machine, such as @orvuhq/orvud-linux-x64, and
-# `orvu` names all four as optional, so that npm installs only the one that
+# `@orvuhq/orvu` names all four as optional, so that npm installs only the one that
 # fits the machine it runs on. On Windows none fits, and the library connects
 # to a sidecar elsewhere over the network instead.
 #
 # This builds, in typescript/release, the library and the sidecar package for
 # the kind of machine it is run on, such as:
 #
-#     release/orvu-0.1.0.tgz
+#     release/orvuhq-orvu-0.1.0.tgz
 #     release/orvuhq-orvud-linux-x64-0.1.0.tgz
 #
 # Install the two together: `npm install` with both files.
@@ -22,7 +22,7 @@
 # `cargo zigbuild`, which comes with the Python package's tools for a
 # release: `pip install -e "python[release]"`.
 #
-# With --main-only it builds only the library, release/orvu-0.1.0.tgz, and
+# With --main-only it builds only the library, release/orvuhq-orvu-0.1.0.tgz, and
 # needs only Node and npm.
 set -e
 cd "$(dirname "$0")/.."
@@ -91,10 +91,10 @@ cp -R package.json README.md ../LICENSE dist proto "$STAGE/main"
     "optionalDependencies.@orvuhq/orvud-linux-arm64=$VERSION" \
     "optionalDependencies.@orvuhq/orvud-darwin-arm64=$VERSION" \
     "optionalDependencies.@orvuhq/orvud-darwin-x64=$VERSION")
-rm -f "release/orvu-$VERSION.tgz"
+rm -f "release/orvuhq-orvu-$VERSION.tgz"
 (cd "$STAGE/main" && npm pack --silent >/dev/null)
-mv "$STAGE/main/orvu-$VERSION.tgz" "release/orvu-$VERSION.tgz"
-ls "release/orvu-$VERSION.tgz"
+mv "$STAGE/main/orvuhq-orvu-$VERSION.tgz" "release/orvuhq-orvu-$VERSION.tgz"
+ls "release/orvuhq-orvu-$VERSION.tgz"
 
 if [ -n "$MAIN_ONLY" ]; then
     exit 0
@@ -114,7 +114,7 @@ cat > "$SIDECAR/README.md" <<EOF
 # @orvuhq/orvud-$MACHINE
 
 The \`orvud\` program of Orvu, for $OS on $CPU. There is no need to install
-it by hand: \`npm install orvu\` brings it on the kind of machine it is for,
+it by hand: \`npm install @orvuhq/orvu\` brings it on the kind of machine it is for,
 and the \`orvu\` package finds it and starts it when it is needed.
 EOF
 cat > "$SIDECAR/package.json" <<EOF

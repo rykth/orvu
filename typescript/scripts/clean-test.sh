@@ -4,7 +4,7 @@
 # quickstart, a team, and a team on two machines. This is what a new user's
 # first commands do, so it is the test that the packages work by themselves.
 #
-#     sh typescript/scripts/clean-test.sh typescript/release/orvu-0.1.0.tgz \
+#     sh typescript/scripts/clean-test.sh typescript/release/orvuhq-orvu-0.1.0.tgz \
 #         typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 #
 # It needs Node and npm, and npm has to be able to fetch the two packages
@@ -16,7 +16,7 @@
 # given to it here as a file, which stands in for it.
 set -e
 if [ $# -ne 2 ]; then
-    echo "usage: clean-test.sh orvu-<version>.tgz orvuhq-orvud-<os>-<cpu>-<version>.tgz" >&2
+    echo "usage: clean-test.sh orvuhq-orvu-<version>.tgz orvuhq-orvud-<os>-<cpu>-<version>.tgz" >&2
     exit 2
 fi
 PACKAGE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
@@ -91,7 +91,7 @@ echo "--- Node $("$NODE" --version)"
 MACHINE="$("$NODE" -p 'process.platform + "-" + process.arch')"
 echo "--- the library is for every kind of machine, and names every sidecar package"
 "$NODE" -e '
-const p = require("./node_modules/orvu/package.json");
+const p = require("./node_modules/@orvuhq/orvu/package.json");
 if (p.os !== undefined || p.cpu !== undefined) throw new Error("the library says which machines it is for");
 const names = ["linux-x64", "linux-arm64", "darwin-arm64", "darwin-x64"].map((m) => "@orvuhq/orvud-" + m).sort();
 const optional = p.optionalDependencies ?? {};
@@ -102,7 +102,7 @@ console.log(names.join(" "), "at", p.version);
 
 echo "--- the sidecar package is for this kind of machine only"
 SAYS="$("$NODE" -p "const p = require(\"./node_modules/@orvuhq/orvud-$MACHINE/package.json\"); p.os + \"-\" + p.cpu + \" \" + p.version")"
-test "$SAYS" = "$MACHINE $("$NODE" -p 'require("./node_modules/orvu/package.json").version')"
+test "$SAYS" = "$MACHINE $("$NODE" -p 'require("./node_modules/@orvuhq/orvu/package.json").version')"
 echo "$SAYS"
 # The same package, said to be for another kind of machine, is refused.
 mkdir "$WORK/other"
@@ -119,20 +119,25 @@ fi
 grep -q EBADPLATFORM "$WORK/refused"
 cd "$WORK/app"
 
-echo "--- the library alone, before the sidecar packages are published"
-# npm skips the sidecar packages it cannot find, and the library says which
-# one to install.
+echo "--- the library alone, as people install it"
+# npm installs the sidecar package for this kind of machine if it has been
+# published, and skips it if not. Either way the library does the right
+# thing: runs it, or says which package to install.
 mkdir "$WORK/alone"
 cd "$WORK/alone"
 npm init -y >/dev/null
 npm install --silent "$PACKAGE"
-test ! -e node_modules/@orvuhq
-if env -i HOME="$WORK/home" PATH="$WORK/alone/node_modules/.bin:$NODE_DIR:/usr/bin:/bin" orvud --version 2>"$WORK/alone.out"; then
-    echo "orvud ran with no sidecar package installed" >&2
-    exit 1
+if [ -e "node_modules/@orvuhq/orvud-$MACHINE" ]; then
+    echo "(the sidecar package for $MACHINE is published, and came along)"
+    env -i HOME="$WORK/home" PATH="$WORK/alone/node_modules/.bin:$NODE_DIR:/usr/bin:/bin" orvud --version
+else
+    if env -i HOME="$WORK/home" PATH="$WORK/alone/node_modules/.bin:$NODE_DIR:/usr/bin:/bin" orvud --version 2>"$WORK/alone.out"; then
+        echo "orvud ran with no sidecar package installed" >&2
+        exit 1
+    fi
+    cat "$WORK/alone.out"
+    grep -q "@orvuhq/orvud-$MACHINE" "$WORK/alone.out"
 fi
-cat "$WORK/alone.out"
-grep -q "@orvuhq/orvud-$MACHINE" "$WORK/alone.out"
 cd "$WORK/app"
 
 echo "--- the orvud command, which runs the sidecar from its package"
@@ -147,7 +152,7 @@ grep -q "run 2 time" "$WORK/second"
 
 echo "--- a team: notes, a task, a budget"
 cat > team.mjs <<'EOF'
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 const team = await Team.connect("default", { me: "clean-test" });
 await team.notes.put("deploy-date", "Friday");
 const task = await team.tasks.add("Summarise the Q3 report");
@@ -168,7 +173,7 @@ cat > machines.mjs <<'EOF'
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as net from "node:net";
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 // A port nothing is using, asked of the system.
 const freePort = () =>

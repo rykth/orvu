@@ -36,7 +36,7 @@ export interface TeamOptions extends ConnectOptions {
  * TypeScript or in Python.
  *
  * ```ts
- * import { Team } from "orvu";
+ * import { Team } from "@orvuhq/orvu";
  *
  * const team = await Team.connect("default", { me: "researcher-2" });
  * await team.notes.put("deploy-date", "Friday");

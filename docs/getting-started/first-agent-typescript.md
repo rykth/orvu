@@ -12,7 +12,7 @@ notes, tasks and budgets.
 Save this as `alice.mjs` and run it with `node alice.mjs`:
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "alice" });
 await team.notes.put("deploy-date", "Friday");
@@ -23,7 +23,7 @@ await team.close();
 And this as `bob.mjs`, from a second terminal:
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "bob" });
 console.log(await team.notes.get("deploy-date")); // Friday
@@ -36,7 +36,7 @@ with `close()`, or with `await using`.
 ## 2. Tasks and a budget
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "alice" });
 
@@ -57,7 +57,7 @@ await team.close();
 ## 3. React to changes
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "alice" });
 for await (const tasks of team.tasks.watch()) {

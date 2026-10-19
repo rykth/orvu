@@ -53,7 +53,7 @@ elsewhere with a connection file.
 
 ## TypeScript
 
-Once the npm package is published, it is `npm install orvu`. That brings
+Once the npm package is published, it is `npm install @orvuhq/orvu`. That brings
 the library and, on Linux or a Mac, on Intel or ARM, the sidecar for that
 machine, which comes in a package of its own such as
 `@orvuhq/orvud-linux-x64`. On Windows it brings the library only, which
@@ -65,7 +65,7 @@ package's README](../../typescript/README.md#working-on-this-package)):
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
+npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
 The second file is named for the kind of machine it was built on, and works

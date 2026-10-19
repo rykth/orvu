@@ -30,7 +30,7 @@ async def follow():
 ## TypeScript
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "alice" });
 const stop = new AbortController();

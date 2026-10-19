@@ -13,7 +13,7 @@ const EXAMPLES = [...README.matchAll(/```ts\n(.*?)```/gs)].map((found) => found[
 test("the readme has examples", () => {
   assert.equal(EXAMPLES.length, 4);
   for (const example of EXAMPLES) {
-    assert.match(example, /from "orvu"/);
+    assert.ok(example.includes(`from "@orvuhq/orvu"`), example);
   }
 });
 
@@ -24,7 +24,7 @@ EXAMPLES.forEach((example, at) =>
   test(`readme example ${at + 1}`, () =>
     withHome(async (home) => {
       const program = path.join(home, `example-${at + 1}.mts`);
-      fs.writeFileSync(program, example.replace('from "orvu"', `from ${JSON.stringify(path.join(REPO, "typescript/src/index.ts"))}`));
+      fs.writeFileSync(program, example.replace('from "@orvuhq/orvu"', `from ${JSON.stringify(path.join(REPO, "typescript/src/index.ts"))}`));
       const printed = execFileSync(process.execPath, [program], { timeout: 60_000, encoding: "utf8", env: process.env });
       const expected = [
         "Friday\ndone\ntrue\ntrue\nfalse\n[ [ 'Sales rose 4%.', 'researcher-2' ] ]\ndeploy-date\n[ 'Deploy is on Friday.' ]\n[ 'researcher-2' ]\n2\n",
@@ -43,7 +43,7 @@ test("the quickstart runs twice and remembers", () =>
   withHome(async (home) => {
     const program = path.join(home, "quickstart.mjs");
     const text = fs.readFileSync(path.join(REPO, "typescript/examples/quickstart.mjs"), "utf8");
-    fs.writeFileSync(program, text.replace('from "orvu"', `from ${JSON.stringify(path.join(REPO, "typescript/src/index.ts"))}`));
+    fs.writeFileSync(program, text.replace('from "@orvuhq/orvu"', `from ${JSON.stringify(path.join(REPO, "typescript/src/index.ts"))}`));
     const run = () => execFileSync(process.execPath, [program], { timeout: 60_000, encoding: "utf8", env: process.env });
     assert.match(run(), /run 1 time/);
     const second = run();

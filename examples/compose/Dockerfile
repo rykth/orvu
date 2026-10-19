@@ -86,7 +86,7 @@ LABEL com.orvu.demo=1
 WORKDIR /app
 RUN --mount=type=bind,from=node-build,source=/out,target=/pkg \
     --mount=type=cache,id=orvu-demo-npm,target=/root/.npm \
-    npm install --omit=dev --no-audit --no-fund /pkg/orvu-0.1.0.tgz
+    npm install --omit=dev --no-audit --no-fund /pkg/orvuhq-orvu-0.1.0.tgz
 COPY examples/compose/agents/agent.ts /app/
 RUN useradd --uid 10001 --create-home orvu
 USER orvu

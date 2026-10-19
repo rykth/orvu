@@ -4,7 +4,7 @@
 // key, and joins the roster. Then it waits for the story to tell it what to
 // do next: the story sends it one step at a time over HTTP, as
 // {"do": ..., "with": {...}}, and the agent answers with what it got back.
-// Every step is an ordinary call of the `orvu` package, the same as a real
+// Every step is an ordinary call of the `@orvuhq/orvu` package, the same as a real
 // agent would make. The steps have the same names as the Python agent's.
 //
 //     AGENT    the agent's name, which is also the name of its key file
@@ -12,8 +12,8 @@
 
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { Clash, OrvuError, Team } from "orvu";
-import type { Task } from "orvu";
+import { Clash, OrvuError, Team } from "@orvuhq/orvu";
+import type { Task } from "@orvuhq/orvu";
 
 const AGENT = process.env.AGENT!;
 const MACHINE = process.env.MACHINE!;

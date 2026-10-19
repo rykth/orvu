@@ -1,5 +1,5 @@
 {
-  "name": "orvu",
+  "name": "@orvuhq/orvu",
   "version": "0.1.0",
   "description": "Shared memory for teams of AI agents",
   "license": "Apache-2.0",

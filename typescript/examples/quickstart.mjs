@@ -1,10 +1,10 @@
 // The shortest program that uses Orvu. Run it twice: the second run sees what
 // the first one wrote.
 //
-//     npm install orvu
+//     npm install @orvuhq/orvu
 //     node quickstart.mjs
 
-import { connect } from "orvu";
+import { connect } from "@orvuhq/orvu";
 
 const client = await connect();
 

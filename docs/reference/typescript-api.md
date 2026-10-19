@@ -1,6 +1,6 @@
 # TypeScript API overview
 
-A map of the `orvu` package for Node. [`typescript/README.md`](../../typescript/README.md)
+A map of the `@orvuhq/orvu` package for Node. [`typescript/README.md`](../../typescript/README.md)
 is the full reference, with every rule and limit.
 
 ## Connecting

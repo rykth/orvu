@@ -50,17 +50,17 @@ program, `orvud`, and starts it the first time it is needed.
 
 ### TypeScript (Node 20 or later)
 
-Once the npm package is published, it is `npm install orvu`. Until then,
+Once the npm package is published, it is `npm install @orvuhq/orvu`. Until then,
 build it from this repository and install the two files that come out, the
 library and `orvud` for your kind of machine:
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
+npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "bob" });
 console.log(await team.notes.get("deploy-date")); // Friday

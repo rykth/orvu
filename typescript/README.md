@@ -26,15 +26,15 @@ or a container" below. It does not run in a browser.
 
 ## How to use it
 
-Once it is published, `npm install orvu` is all it takes. Until then, build
+Once it is published, `npm install @orvuhq/orvu` is all it takes. Until then, build
 it from this repository and install the two files that come out together:
 
 ```text
 sh typescript/scripts/build-package.sh
-npm install typescript/release/orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
+npm install typescript/release/orvuhq-orvu-0.1.0.tgz typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
-`orvu` is the library, the same on every machine. `orvud` comes in a
+`@orvuhq/orvu` is the library, the same on every machine. `orvud` comes in a
 package of its own for each kind of machine: `@orvuhq/orvud-linux-x64`,
 `-linux-arm64`, `-darwin-arm64` and `-darwin-x64`. The library names all
 four as optional, and npm installs only the one that fits, so on Linux or a
@@ -63,7 +63,7 @@ name shares the same notes, task board, budgets, documents, inbox, tallies
 and roster, whether it is written in TypeScript or in Python.
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { me: "researcher-2" });
 
@@ -151,7 +151,7 @@ model knows English.
 ### Objects by name
 
 ```ts
-import { connect } from "orvu";
+import { connect } from "@orvuhq/orvu";
 
 const client = await connect();
 
@@ -176,7 +176,7 @@ client.close();
 ### Several operations in one message
 
 ```ts
-import { connect } from "orvu";
+import { connect } from "@orvuhq/orvu";
 
 const client = await connect();
 const batch = client.batch();
@@ -194,7 +194,7 @@ once the batch has been sent.
 ### React when something changes
 
 ```ts
-import { connect } from "orvu";
+import { connect } from "@orvuhq/orvu";
 
 const client = await connect();
 await client.register("status").set("starting");
@@ -633,7 +633,7 @@ on network ports of this computer, on `127.0.0.1`, and cannot run where that
 is not allowed.
 
 `scripts/build-package.sh` builds the packages for release, in `release/`:
-the library, `orvu-0.1.0.tgz`, and the sidecar package for the kind of
+the library, `orvuhq-orvu-0.1.0.tgz`, and the sidecar package for the kind of
 machine it runs on, such as `orvuhq-orvud-linux-x64-0.1.0.tgz`. A release
 needs the sidecar package built on each of the four kinds of machine, and
 the library once. Only the library that is built names the sidecar packages,
@@ -650,10 +650,10 @@ machine stands in for its package. Run it in a container too, to test it on
 Node 20:
 
 ```text
-sh typescript/scripts/clean-test.sh typescript/release/orvu-0.1.0.tgz \
+sh typescript/scripts/clean-test.sh typescript/release/orvuhq-orvu-0.1.0.tgz \
     typescript/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 docker run --rm -v "$PWD/typescript":/src:ro node:20-slim \
-    sh /src/scripts/clean-test.sh /src/release/orvu-0.1.0.tgz \
+    sh /src/scripts/clean-test.sh /src/release/orvuhq-orvu-0.1.0.tgz \
     /src/release/orvuhq-orvud-linux-x64-0.1.0.tgz
 ```
 
@@ -668,7 +668,7 @@ been tried on Windows itself.
 
 ```text
 sh typescript/scripts/build-package.sh --main-only
-sh typescript/scripts/clean-test-network.sh typescript/release/orvu-0.1.0.tgz
+sh typescript/scripts/clean-test-network.sh typescript/release/orvuhq-orvu-0.1.0.tgz
 ```
 
 The message definitions are copied from `crates/orvud/proto/orvu/v1/dataplane.proto` into

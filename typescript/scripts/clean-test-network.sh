@@ -7,7 +7,7 @@
 # orvud command, and checks both say to connect over the network.
 #
 #     sh typescript/scripts/build-package.sh --main-only
-#     sh typescript/scripts/clean-test-network.sh typescript/release/orvu-0.1.0.tgz
+#     sh typescript/scripts/clean-test-network.sh typescript/release/orvuhq-orvu-0.1.0.tgz
 #
 # The sidecar it connects to is the one built from this repository,
 # target/debug/orvud, or $ORVUD_BIN. npm has to be able to fetch the two
@@ -43,7 +43,7 @@ npm init -y >/dev/null
 npm install --silent --os=win32 --cpu=x64 "$PACKAGE" 2>"$WORK/npm.out" || { cat "$WORK/npm.out"; exit 1; }
 
 echo "--- no sidecar was installed"
-test ! -e node_modules/@orvuhq
+test -z "$(ls -d node_modules/@orvuhq/orvud-* 2>/dev/null)"
 echo "none"
 
 echo "--- a sidecar elsewhere, serving the network"
@@ -67,7 +67,7 @@ run() {
 
 echo "--- an agent with only a connection file"
 run '
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 const team = await Team.connect();
 await team.notes.put("deploy", "Friday");
 console.log(team.me, await team.notes.get("deploy"));
@@ -77,7 +77,7 @@ await team.close();
 echo "--- on Windows, asked for a sidecar of its own"
 run '
 Object.defineProperty(process, "platform", { value: "win32" });
-const orvu = await import("orvu");
+const orvu = await import("@orvuhq/orvu");
 delete process.env.ORVU_CONNECT;
 try {
   await orvu.connect();
@@ -93,7 +93,7 @@ try {
 echo "--- on Windows, the orvud command"
 if run "
 Object.defineProperty(process, \"platform\", { value: \"win32\" });
-await import(\"$WORK/app/node_modules/orvu/dist/orvud.js\");
+await import(\"$WORK/app/node_modules/@orvuhq/orvu/dist/orvud.js\");
 " 2>"$WORK/command.out"; then
     echo "the orvud command ran with no program to run" >&2
     exit 1

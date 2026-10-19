@@ -37,7 +37,7 @@ team = Team.connect(connection="alice.orvu")
 ```
 
 ```ts
-import { Team } from "orvu";
+import { Team } from "@orvuhq/orvu";
 
 const team = await Team.connect("default", { connection: "alice.orvu" });
 ```
